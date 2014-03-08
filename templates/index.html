@@ -109,8 +109,8 @@ with model:
     nengo.Connection(c, d, filter=0.01)
     nengo.Connection(b, d, filter=0.01)
     nengo.Connection(d, e.input, filter=0.01)
-    b = nengo.Probe(b, attr='decoded_output')
-    c = nengo.Probe(c, attr='decoded_output')""" }}
+    nengo.Probe(b, attr='decoded_output')
+    nengo.Probe(c, attr='decoded_output')""" }}
 </div>
 
 <div id="graph">
