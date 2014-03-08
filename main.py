@@ -5,10 +5,13 @@ Usage: python main.py [port=8080]
 
 import tornado.ioloop
 import tornado.web
+from tornado import gen
 
+import logging
+import json
 import os.path
-import traceback
 import sys
+import traceback
 import webbrowser
 
 import nengo_helper
@@ -31,20 +34,25 @@ class MainHandler(tornado.web.RequestHandler):
         self.render('index.html')
 
 
-class ModelBuildingHandler(tornado.web.RequestHandler):
-    """Request handler for building models."""
+class ModelHandler(tornado.web.RequestHandler):
+    """Request handler for displaying models."""
 
     def post(self):
         code = self.get_argument('code')
-        code = code.replace('\r\n', '\n')
-        self.write(self._build_model(code))
+        self.write(self._serialize_model(code))
 
-    def _build_model(self, code, filename='<string>'):
+    @classmethod
+    def get_model(cls, code, filename='<string>'):
+        c = compile(code.replace('\r\n', '\n'), filename, 'exec')
+        locals = {}
+        globals = {}
+        exec c in globals, locals
+        return locals['model']
+
+    @classmethod
+    def _serialize_model(cls, code, filename='<string>'):
         try:
-            c = compile(code, filename, 'exec')
-            locals = {}
-            globals = {}
-            exec c in globals, locals
+            model = cls.get_model(code)
 
         except (SyntaxError, Exception):
             try:
@@ -72,7 +80,6 @@ class ModelBuildingHandler(tornado.web.RequestHandler):
                 traceback.print_exc()
 
         try:
-            model = locals['model']
             nodes = []
             node_map = {}
             links = []
@@ -92,7 +99,8 @@ class ModelBuildingHandler(tornado.web.RequestHandler):
 
                 nodes.append(dict(label=obj.label, line=obj._created_line_number-1, id=len(nodes)))
             for c in model.connections:
-                links.append(dict(source=node_map[c.pre], target=node_map[c.post], id=len(links)))
+                if not isinstance(c.post, nengo.Probe):
+                    links.append(dict(source=node_map[c.pre], target=node_map[c.post], id=len(links)))
         except:
             traceback.print_exc()
             return dict(error_line=2, text='Unknown')
@@ -100,13 +108,70 @@ class ModelBuildingHandler(tornado.web.RequestHandler):
         return dict(nodes=nodes, links=links)
 
 
+class SimulationHandler(tornado.web.RequestHandler):
+    """Request handler for streaming simulation data."""
+
+    _simulators = {
+        None : nengo.Simulator
+    }
+    _default_dt = 0.001
+
+    def prepare(self):
+        """Callback for when the connection is opened."""
+        self._is_closed = False
+
+    @tornado.web.asynchronous
+    @gen.engine
+    def get(self):
+        """Asynchronously streams the simulation data."""
+        # Get the user-specified code and simulation parameters
+        code = self.get_argument('code')
+        sim = self.get_argument('sim', None)
+        dt = float(self.get_argument('dt', self._default_dt))
+
+        # Build the model and simulator
+        model = ModelHandler.get_model(code)
+        simulator = self._simulators[sim](model, dt)
+
+        # Maintain an active connection, blocking only during each step
+        while not self._is_closed:
+            data = yield gen.Task(self._step, simulator)
+            logging.debug('Connection (%d): %s', id(self), data)
+            response = json.dumps(data)
+            self.write('%d;%s;' % (len(response), response))
+            self.flush()
+
+    def _step(self, simulator, callback):
+        """Advances the simulator one step, and then invokes callback(data)."""
+        simulator.step()
+        probes = {}
+        for probe in simulator.model.probemap:
+            probes[probe.label] = list(simulator.data(probe)[-1])
+        data = {
+            't': simulator.n_steps * simulator.model.dt,
+            'probes': probes,
+        }
+        # Return control to the main IOLoop in order to process any other
+        # pending requests, before re-entering the yield point in the coroutine
+        tornado.ioloop.IOLoop.instance().add_callback(lambda: callback(data))
+
+    def on_connection_close(self):
+        """Callback for when the active connection is closed."""
+        self._is_closed = True
+
+
 class Application(tornado.web.Application):
     """Main application class for holding global server state."""
 
-    def initialize(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         # Set up globally accessible data-structures / etc in here!
         # They can be accessed in the request via self.application.
-        pass
+
+        # Set up logging
+        level = logging.DEBUG if kwargs['debug'] else logging.WARNING
+        logging.root.setLevel(level)
+
+        super(Application, self).__init__(*args, **kwargs)
 
 
 settings = {
@@ -117,7 +182,8 @@ settings = {
 
 application = Application([
     (r'/', MainHandler),
-    (r'/build', ModelBuildingHandler),
+    (r'/model', ModelHandler),
+    (r'/simulate', SimulationHandler),
 ], **settings)
 
 

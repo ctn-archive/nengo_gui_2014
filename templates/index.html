@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <title>Nengo Editor</title>
+
+<script src="static/js/jquery.1.5.2.min.js" type="text/javascript"></script>
+<script src="static/js/jquery.stream-1.2.min.js" type="text/javascript"></script>
+
 <style type="text/css" media="screen">
     #editor {
         position: absolute;
@@ -46,6 +50,39 @@
         alignment-baseline: middle;
         }
 
+    #controls {
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 15px;
+    }
+
+    .button {
+        background-color: #eee;
+        color: #000;
+        border: 1px solid #000;
+        text-align: center;
+        font-size: 14px;
+        font-family: courier;
+        width: 36px;
+        height: 36px;
+        display: table-cell;
+        vertical-align: middle;
+        cursor: pointer;
+    }
+
+    .button:hover {
+        background-color: #6b7;
+        color: #fff;
+        border-color: #fff;
+    }
+
+    #simulation {
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 15px;
+    }
 
 </style>
 </head>
@@ -63,15 +100,17 @@ var aceRange = ace.require('ace/range').Range;
 model = nengo.Model()
 with model:
     a = nengo.Ensemble(neurons=100, dimensions=2, label='a')
-    b = nengo.Ensemble(neurons=80, dimensions=2)
-    c = nengo.Ensemble(neurons=80, dimensions=2)
+    b = nengo.Ensemble(neurons=80, dimensions=2, label='b')
+    c = nengo.Ensemble(neurons=80, dimensions=2, label='c')
     d = nengo.Ensemble(neurons=80, dimensions=2)
     e = nengo.networks.EnsembleArray(80,2)
     nengo.Connection(a, b, filter=0.01)
     nengo.Connection(b, c, filter=0.01)
     nengo.Connection(c, d, filter=0.01)
     nengo.Connection(b, d, filter=0.01)
-    nengo.Connection(d, e.input, filter=0.01)""" }}
+    nengo.Connection(d, e.input, filter=0.01)
+    b = nengo.Probe(b, attr='decoded_output')
+    c = nengo.Probe(c, attr='decoded_output')""" }}
 </div>
 
 <div id="graph">
@@ -121,7 +160,7 @@ d3.selection.prototype.moveToFront = function() {
         data.append('code', editor.getValue());
 
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'build', true);
+        xhr.open('POST', 'model', true);
         xhr.onload = update_graph;
         xhr.send(data);
     }
@@ -297,5 +336,44 @@ d3.selection.prototype.moveToFront = function() {
 
 
 </script>
+
+<div id="controls">
+  <div id="button-play" class="button">&gt;</div>
+</div>
+
+<div id="simulation">
+    <div id="time">
+    </div>
+    <pre id="probes">
+    </pre>
+</div>
+
+<script>
+function stream() {
+    $.stream("simulate", {
+        type: "http",
+        dataType: "json",
+        openData: {
+            code: editor.getValue()
+        },
+        message: function(event) {
+            $("#simulation #time").text(event.data.t.toFixed(3));
+            var probe_data = [];
+            $.each(event.data.probes, function(probe, x) {
+                probe_data.push(probe + "=" + x);
+            });
+            $("#simulation #probes").text(probe_data.join("\n"));
+        }
+    });
+};
+
+$(document).ready(function() {
+    $("#button-play").click(function() {
+        $(this).hide();
+        stream();
+    });
+});
+</script>
+
 </body>
 </html>
