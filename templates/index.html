@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Nengo Editor</title>
+    <meta charset="utf-8">
+
+    <script src="static/ace/src-noconflict/ace.js" type="text/javascript"></script>
+    <script src="static/js/d3.min.js" type="text/javascript"></script>
+    <script src="static/js/jquery.1.5.2.min.js" type="text/javascript"></script>
+    <script src="static/js/jquery.stream-1.2.min.js" type="text/javascript"></script>
+    <script src="static/js/main.js" type="text/javascript"></script>
+
+    <link rel="stylesheet" type="text/css" href="static/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/editor.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/graph.css" />
+</head>
+<body>
+
+{% comment %} Tornado strips leading whitespace unless part of explicit string
+<div id="editor">{{ """import nengo
+
+model = nengo.Model()
+with model:
+    a = nengo.Ensemble(neurons=100, dimensions=2, label='a')
+    b = nengo.Ensemble(neurons=80, dimensions=2, label='b')
+    c = nengo.Ensemble(neurons=80, dimensions=2, label='c')
+    d = nengo.Ensemble(neurons=80, dimensions=2)
+    e = nengo.networks.EnsembleArray(80,2)
+    nengo.Connection(a, b, filter=0.01)
+    nengo.Connection(b, c, filter=0.01)
+    nengo.Connection(c, d, filter=0.01)
+    nengo.Connection(b, d, filter=0.01)
+    nengo.Connection(d, e.input, filter=0.01)
+    nengo.Probe(b, attr='decoded_output')
+    nengo.Probe(c, attr='decoded_output')""" }}
+</div>
+
+<div id="graph">
+    <svg>
+        <defs>
+            // the arrow on the links
+            <marker id="TriangleMarker"
+              viewBox="0 0 10 10" refX="0" refY="5"
+              markerUnits="strokeWidth"
+              markerWidth="6" markerHeight="4"
+              orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" />
+            </marker>
+        </defs>
+    </svg>
+</div>
+
+<div id="controls">
+    <div id="button-play" class="button">&gt;</div>
+</div>
+
+<div id="simulation">
+    <div id="time"></div>
+    <pre id="probes"></pre>
+</div>
+
+</body>
+</html>

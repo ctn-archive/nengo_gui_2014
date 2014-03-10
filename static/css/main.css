@@ -1,0 +1,33 @@
+#controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 15px;
+}
+
+.button {
+    background-color: #eee;
+    color: #000;
+    border: 1px solid #000;
+    text-align: center;
+    font-size: 14px;
+    font-family: courier;
+    width: 36px;
+    height: 36px;
+    display: table-cell;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #6b7;
+    color: #fff;
+    border-color: #fff;
+}
+
+#simulation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 15px;
+}
