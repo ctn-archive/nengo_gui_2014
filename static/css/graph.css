@@ -1,0 +1,28 @@
+div#graph {
+    position: absolute;
+    top: 0;
+    right: 50%;
+    bottom: 0;
+    left: 0;
+    background-color: white;
+}
+
+svg .link {
+    stroke: #333;
+    stroke-opacity: .6;
+    stroke-width: 2px;
+    marker-mid: url(#TriangleMarker);
+}
+
+svg g.node circle{
+    stroke: #444;
+    stroke-width: 0px;
+    fill: #ddd;
+}
+
+svg g.node text {
+    fill: black;
+    font-family: sans-serif;
+    text-anchor: middle;
+    alignment-baseline: middle;
+}
