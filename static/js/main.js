@@ -60,14 +60,8 @@ function getLabel(d) {
     return d.label;
 }
 
-function update_graph(graph) {
-    var i, j, found, link, node, nodeEnter;
-
-    if (graph.error_line !== undefined) {
-        annotateLine(graph.error_line - 1, "error");
-        return;
-    }
-    clearAnnotations();
+function update_graph_data(graph, newNodeIds, newLinks) {
+    var i, j, found;
 
     for (i = 0; i < graph.nodes.length; i += 1) {
         found = false;
@@ -81,24 +75,37 @@ function update_graph(graph) {
         if (!found) {
             nodes.push(graph.nodes[i]);
         }
+        newNodeIds[graph.nodes[i].id] = true;
     }
 
-    for (j = 0; j < nodes.length; j += 1) {
-        found = false;
-        for (i = 0; i < graph.nodes.length; i += 1) {
-            if (nodes[j].id === graph.nodes[i].id) {
-                found = true;
-            }
-        }
-        if (!found) {
-            nodes.splice(j, 1);
-            j -= 1;
-        }
+    for (i = 0; i < graph.networks.length; i += 1) {
+        update_graph_data(graph.networks[i], newNodeIds);
     }
+
+    for (i = 0; i < graph.links.length; i += 1) {
+        // Note that the source/target of the link must be the index into the
+        // nodes array, NOT the 'id' of those corresponding nodes (they just
+        // happen to be the same at the moment)
+        links.push(graph.links[i]);
+    }
+}
+
+function update_graph(graph) {
+    var i, link, node, nodeEnter, newNodeIds = {};
+
+    if (graph.error_line !== undefined) {
+        annotateLine(graph.error_line - 1, "error");
+        return;
+    }
+    clearAnnotations();
 
     links.splice(0, links.length);
-    for (i = 0; i < graph.links.length; i += 1) {
-        links.push(graph.links[i]);
+    update_graph_data(graph, newNodeIds);
+    for (i = 0; i < nodes.length; i += 1) {
+        if (!nodes[i].id in newNodeIds) {
+            nodes.splice(i, 1);
+            i -= 1;
+        }
     }
 
     link = svg.selectAll(".link").data(links, getId);
@@ -137,7 +144,7 @@ function update_graph(graph) {
     });
 
     resize();
-    force.linkDistance(100).start();
+    force.linkDistance(50).start();
 }
 
 function fetch_graph() {
@@ -179,7 +186,7 @@ $(document).ready(function () {
     force = d3.layout.force();
     nodes = force.nodes();
     links = force.links();
-    force.charge(-100);
+    force.charge(-2500);
     force.drag().on("dragstart", dragstart);
     d3.select(window).on("resize", resize);
 

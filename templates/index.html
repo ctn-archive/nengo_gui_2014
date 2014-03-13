@@ -19,20 +19,25 @@
 {% comment %} Tornado strips leading whitespace unless part of explicit string
 <div id="editor">{{ """import nengo
 
-model = nengo.Model()
+model = nengo.Network()
 with model:
-    a = nengo.Ensemble(neurons=100, dimensions=2, label='a')
-    b = nengo.Ensemble(neurons=80, dimensions=2, label='b')
-    c = nengo.Ensemble(neurons=80, dimensions=2, label='c')
-    d = nengo.Ensemble(neurons=80, dimensions=2)
-    e = nengo.networks.EnsembleArray(80,2)
-    nengo.Connection(a, b, filter=0.01)
-    nengo.Connection(b, c, filter=0.01)
-    nengo.Connection(c, d, filter=0.01)
-    nengo.Connection(b, d, filter=0.01)
-    nengo.Connection(d, e.input, filter=0.01)
-    nengo.Probe(b, attr='decoded_output')
-    nengo.Probe(c, attr='decoded_output')""" }}
+    group = nengo.Network()
+    with group:
+        x = nengo.Ensemble(nengo.LIF(80), dimensions=2)
+        y = nengo.Ensemble(nengo.LIF(80), dimensions=2)
+        z = nengo.Ensemble(nengo.LIF(80), dimensions=2)
+        nengo.Connection(x, y, filter=0.01)
+        nengo.Connection(y, z, filter=0.01)
+        nengo.Connection(x, z, filter=0.01)
+    a = nengo.Ensemble(nengo.LIF(100), dimensions=2, label="input")
+    b = nengo.networks.EnsembleArray(nengo.LIF(80), 2)
+    c = nengo.Ensemble(nengo.LIF(40), dimensions=2, label="output")
+    nengo.Connection(a, x, filter=0.01)
+    nengo.Connection(z, b.input, filter=0.01)
+    nengo.Connection(b.output, c)
+    nengo.Probe(a)
+    nengo.Probe(b.input)
+    nengo.Probe(c)""" }}
 </div>
 
 <div id="graph">

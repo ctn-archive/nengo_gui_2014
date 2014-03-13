@@ -29,15 +29,15 @@ class ModelHandler(tornado.web.RequestHandler):
         self.write(self._serialize_model(code))
 
     @classmethod
-    def get_model(cls, code, filename='<string>'):
-        c = compile(code.replace('\r\n', '\n'), filename, 'exec')
+    def get_model(cls, code):
+        c = compile(code.replace('\r\n', '\n'), '<string>', 'exec')
         locals = {}
         globals = {}
         exec c in globals, locals
         return locals['model']
 
     @classmethod
-    def _serialize_model(cls, code, filename='<string>'):
+    def _serialize_model(cls, code):
         try:
             model = cls.get_model(code)
 
@@ -51,7 +51,7 @@ class ModelHandler(tornado.web.RequestHandler):
                 error_line = e_value.lineno
             else:
                 for fn, line, funcname, text in reversed(tb):
-                    if fn == filename:
+                    if fn == '<string>':
                         error_line = line
                         break
                 else:
@@ -61,38 +61,50 @@ class ModelHandler(tornado.web.RequestHandler):
             logging.debug(util.traceback_exc())
             return {'error_line': error_line, 'text': str(e_value)}
 
-        nodes = []
-        node_map = {}
-        links = []
         lines = code.splitlines()
-        for obj in model.objs:
-            node_map[obj] = len(nodes)
+        node_index_map = {}
+        link_index_map = {}
 
-            label = obj.label
-            if (isinstance(obj, nengo.Ensemble) and label == 'Ensemble') or \
-               (isinstance(obj, nengo.Node) and label == 'Node') or \
-               (isinstance(obj, nengo.Network) and label == 'Network'):
-                text = lines[obj._created_line_number-1]
-                if '=' in text:
-                    text = text.split('=', 1)[0].strip()
-                    if util.is_identifier(text):
-                        obj.label = text
+        def find_label(obj):
+            if obj._need_auto_label:
+                name = util.parse_variable_name(
+                    lines[obj._deepest_line_number - 1])
+                if name:
+                    return name
+            return obj.label
 
-            nodes.append({
-                'label': obj.label,
-                'line': obj._created_line_number-1,
-                'id': len(nodes),
-            })
-
-        for c in model.connections:
-            if not isinstance(c.post, nengo.Probe):
-                links.append({
-                    'source': node_map[c.pre],
-                    'target': node_map[c.post],
-                    'id': len(links),
+        def to_dict(network, prefix=''):
+            nodes = []
+            for obj in network.nodes + network.ensembles:
+                node_index_map[obj] = len(node_index_map)
+                nodes.append({
+                    'label': prefix + find_label(obj),
+                    'line': obj._deepest_line_number - 1,
+                    'id': node_index_map[obj],
                 })
 
-        return {'nodes': nodes, 'links': links}
+            networks = [to_dict(subnetwork,
+                                prefix + find_label(subnetwork) + '.')
+                        for subnetwork in network.networks]
+
+            links = []
+            for conn in network.connections:
+                if not isinstance(conn.post, nengo.Probe):
+                    link_index_map[conn] = len(link_index_map)
+                    links.append({
+                        'source': node_index_map[conn.pre],
+                        'target': node_index_map[conn.post],
+                        'id': link_index_map[conn],
+                    })
+
+            return {
+                'label': prefix[:-1],
+                'nodes': nodes,
+                'links': links,
+                'networks': networks,
+            }
+
+        return to_dict(model)
 
 
 class SimulationHandler(tornado.web.RequestHandler):
@@ -132,8 +144,8 @@ class SimulationHandler(tornado.web.RequestHandler):
         """Advances the simulator one step, and then invokes callback(data)."""
         simulator.step()
         probes = {}
-        for probe in simulator.model.probemap:
-            probes[probe.label] = list(simulator.data(probe)[-1])
+        for probe in simulator.model.probes:
+            probes[probe.label] = list(simulator.data[probe][-1])
         data = {
             't': simulator.n_steps * simulator.model.dt,
             'probes': probes,
