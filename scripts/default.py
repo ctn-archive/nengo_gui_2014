@@ -2,16 +2,22 @@ import nengo
 
 model = nengo.Network()
 with model:
-	a = nengo.Ensemble(n_neurons=80, dimensions=2, label="testasdfasdfasdfasfd")
+    a = nengo.Ensemble(n_neurons=80, dimensions=2, label="testasdfasdfasdfasfd")
 
-	vis = nengo.Network(label="tester")
-	with vis:
-		b = nengo.Ensemble(n_neurons=80, dimensions=2)
+    b = nengo.Ensemble(n_neurons=80, dimensions=2)
 
-		v1 = nengo.Network()
-		with v1:
-			c = nengo.Ensemble(n_neurons=80, dimensions=2)
+    c = nengo.Ensemble(n_neurons=80, dimensions=2)
+    
+    v1=nengo.Network(label="V1")
+    with v1:
+        d = nengo.Ensemble(n_neurons=80, dimensions=2)
+        e = nengo.Ensemble(n_neurons=80, dimensions=2)
 
+    nengo.Connection(a,b)
+    nengo.Connection(a,a)
+    nengo.Connection(c,b)
+    nengo.Connection(c,e)
+    nengo.Connection(e,d)
 
 import nengo_gui
 gui = nengo_gui.Config()

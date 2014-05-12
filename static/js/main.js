@@ -83,20 +83,21 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
-    d.x = d3.event.x;
-    d.y = d3.event.y;
+    d.x = x.invert(d3.mouse(svg[0][0])[0]);
+    d.y = y.invert(d3.mouse(svg[0][0])[1]);
 
-    d3.select(this).attr('transform', "translate(" + d.x + "," + d.y + ")");
+    d3.select(this)
+        .attr('transform', "translate(" + [x(d.x), y(d.y)]  + ")");
 
     //sort the nodes by size of full contains (largest to smallest)
-    var node_list = graph.nodes.slice(0)
+    //var node_list = graph.nodes.slice(0)
     //node_list.sort(containsCompare);
-    node_list = d3.map(node_list); //create a map of the nodes
-    update_node_positions(d, d3.event.dx, d3.event.dy, node_list);
+    //node_list = d3.map(node_list); //create a map of the nodes
+    //update_node_positions(d, d3.event.dx, d3.event.dy, node_list);
     update_net_position(d, d3.event.dx, d3.event.dy);
-    update_net_sizes();
+    redraw_net_sizes();
     update_line_locations();
-    update_gui_pos();
+    //update_gui_pos();
 }
 
 function dragended(d) {
@@ -104,40 +105,23 @@ function dragended(d) {
 }
 
 function zoomed() {
-    scale = d3.event.scale
-    container.attr("transform", "translate(" + //scale everything
-        d3.event.translate + ")scale(" + scale + ")");
-
-    node.selectAll('text') //Change the fonts size as a fcn of scale
-    .style("font-size", function (d) {
-        newsize = node_fontsize / scale
-        if (newsize > node_fontsize) {
-            return newsize + "px";
-        } else {
-            return node_fontsize + "px";
-        }
-    })
-
-    //could be faster if keep track of whether it was just drawn
-    if (scale < .75) { //Don't draw node/ens text if scale out far 
-        node.selectAll("g.node.node_ens text, g.node.node_nde text")
-            .text("")
-    } else {
-        node.selectAll("g.node.node_ens text, g.node.node_nde text")
-            .text(function (d) {return d.label;});
-    }
-
-    update_net_text();
+    node.attr("transform", function (d) {
+            return "translate(" + [x(d.x), y(d.y)] +")";
+        })
+    redraw_net_sizes();
+    update_line_locations();
 }
 
 //***********************
 // Drawing graph elements
 //***********************
-// Move objects to be drawn on top
 var net_widths = {};
 var net_heights = {};
+var net_draw_widths = {};
+var net_draw_heights = {};
 var net_text_margin = 10;
 
+// Move objects to be drawn on top
 d3.selection.prototype.moveToFront = function () {
     return this.each(function () {this.parentNode.appendChild(this);});
 };
@@ -177,39 +161,36 @@ function update_line_locations() {
             y0 = graph.nodes[d.source].y;
             x1 = graph.nodes[d.target].x;
             y1 = graph.nodes[d.target].y;
-            return "" + x0 + "," + y0 + " " + 
-                (x0 * 0.45 + x1 * 0.55) + "," + 
-                (y0 * 0.45 + y1 * 0.55) + " " +
-                x1 + "," + y1;
+            return "" + x(x0) + "," + y(y0) + " " + 
+                x(x0 * 0.45 + x1 * 0.55) + "," + 
+                y(y0 * 0.45 + y1 * 0.55) + " " +
+                x(x1) + "," + y(y1);
         });
 
     linkRecur
-        .attr('x', function (d) {return graph.nodes[d.source].x})
-        .attr('y', function (d) {return graph.nodes[d.source].y})
+        .attr('x', function (d) {return x(graph.nodes[d.source].x)})
+        .attr('y', function (d) {return y(graph.nodes[d.source].y)})
 }
 
 //Update all network sizes based on node positions
-function update_net_sizes() {
+function redraw_net_sizes() {
     node.filter(function (d) {return d.type == 'net';})
         .each(update_net_size)
         .selectAll('rect')
-        .attr('x', function (d) {return -net_widths[d.id] / 2;})
-        .attr('y', function (d) {return -net_heights[d.id] / 2;})
-        .attr('width', function (d) {return net_widths[d.id];})
-        .attr('height', function (d) {return net_heights[d.id];});
-    node.attr('transform', function (d) {return 'translate(' + [d.x, d.y] + ')';});
+        .attr('x', function (d) {return -net_draw_widths[d.id]/2;})
+        .attr('y', function (d) {return -net_draw_heights[d.id]/2;})
+        .attr('width', function (d) {return net_draw_widths[d.id];})
+        .attr('height', function (d) {return net_draw_heights[d.id];});
+    node.attr('transform', function (d) {
+        return 'translate(' + [x(d.x), y(d.y)] + ')';});
     update_net_text();
 }
 
 function update_net_text() {
-    node.selectAll("g.node.node_net text") //Position net text by scale
-    .attr('y', function (d) {
-        if (zoom.scale() < 1) {
-            return net_heights[d.id] / 2 + net_text_margin / zoom.scale() + "px"
-        } else {
-            return net_heights[d.id] / 2 + net_text_margin + "px"
-        }
-    })
+    node.selectAll("g.node.node_net text") //Position net text
+        .attr('y', function (d) {
+            return net_draw_heights[d.id] / 2 + net_text_margin + "px";
+        })
 }
 
 //Update given network size based on node position
@@ -225,8 +206,8 @@ function update_net_size(d) {
         yBorder = 0
         tmp = graph.nodes[d.contains[obj]]
         if (tmp.type == "net") {
-            xBorder = net_widths[tmp.id] / 2 - net_inner_margin
-            yBorder = net_heights[tmp.id] / 2 - net_inner_margin
+            xBorder = net_widths[tmp.id] / 2 //- net_inner_margin
+            yBorder = net_heights[tmp.id] / 2 //- net_inner_margin
         }
         x0 = Math.min(graph.nodes[d.contains[obj]].x - xBorder, x0);
         x1 = Math.max(graph.nodes[d.contains[obj]].x + xBorder, x1);
@@ -237,12 +218,14 @@ function update_net_size(d) {
     d.y = (y0 + y1) / 2;
     dx = d.x - xstart;
     dy = d.y - ystart;
+    net_draw_widths[d.id] = x(x1) - x(x0) + 2 * net_inner_margin; //track corners
+    net_draw_heights[d.id] = y(y1) - y(y0) + 2 * net_inner_margin;
     net_widths[d.id] = x1 - x0 + 2 * net_inner_margin; //track heights/widths
     net_heights[d.id] = y1 - y0 + 2 * net_inner_margin;
     
     var node_list = graph.nodes.slice(0)
     //node_list.sort(containsCompare)
-    update_node_positions(d, 2 * dx, 2 * dy, d3.map(node_list))
+    //update_node_positions(d, 2 * dx, 2 * dy, d3.map(node_list))
 }
 
 //Move all the nodes in a network if network position changes
@@ -506,7 +489,7 @@ function update_graph() {
 
     //redraw so nodes are on top, lowest level nets 2nd, and so on
     layer_container();
-    update_net_sizes();
+    redraw_net_sizes();
     update_line_locations();
     resize();
 }
@@ -514,10 +497,22 @@ function update_graph() {
 //***********
 //Main script
 //***********
+var width = window.innerWidth/2;
+var height = window.innerHeight;
+
+var x = d3.scale.linear()
+    .domain([0, width])
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .domain([0, height])
+    .range([0, height]);
+
 $(document).ready(function () {
     zoom = d3.behavior.zoom()
-        .scaleExtent([.05, 10])
-        .on('zoom', zoomed);
+        .x(x).y(y)
+        .scaleExtent([.1, 8])
+        .on("zoom", zoomed);
 
     drag = d3.behavior.drag()
         .origin(function (d) {return d})
@@ -529,7 +524,8 @@ $(document).ready(function () {
     editor = ace.edit("editor");
     editor.setTheme("ace/theme/monokai");
     editor.getSession().setMode("ace/mode/python");
-    editor.on('change', function(event) {if (!gui_updating) reload_graph_data();});
+    editor.on('change', function(event) {
+        if (!gui_updating) reload_graph_data();});
 
     //initialize file browser
     $('#filebrowser').hide()
@@ -542,9 +538,12 @@ $(document).ready(function () {
     }, open_file);
 
     //initialize graph
-    svg = d3.select("svg");
+    svg = d3.select("svg")
+        .attr("width", width)
+        .attr("height", height)
     container = svg.append('g');
-    zoom(svg); // set up zooming on the graph
+    svg.call(zoom); // set up zooming on the graph
+    
     d3.select(window).on("resize", resize);
 
     //start this puppy up
