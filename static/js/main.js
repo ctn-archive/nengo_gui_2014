@@ -94,10 +94,10 @@ function dragged(d) {
     //node_list.sort(containsCompare);
     //node_list = d3.map(node_list); //create a map of the nodes
     //update_node_positions(d, d3.event.dx, d3.event.dy, node_list);
-    update_net_position(d, d3.event.dx, d3.event.dy);
+    update_net_position(d, d3.event.dx/zoom.scale(), d3.event.dy/zoom.scale());
     redraw_net_sizes();
     update_line_locations();
-    //update_gui_pos();
+    update_gui_pos();
 }
 
 function dragended(d) {
