@@ -89,12 +89,15 @@ function dragged(d) {
     d3.select(this)
         .attr('transform', "translate(" + [x(d.x), y(d.y)]  + ")");
 
+
+    dx = d3.event.dx/zoom.scale()
+    dy = d3.event.dy/zoom.scale()
+    var node_list = graph.nodes.slice(0)
     //sort the nodes by size of full contains (largest to smallest)
-    //var node_list = graph.nodes.slice(0)
     //node_list.sort(containsCompare);
-    //node_list = d3.map(node_list); //create a map of the nodes
-    //update_node_positions(d, d3.event.dx, d3.event.dy, node_list);
-    update_net_position(d, d3.event.dx/zoom.scale(), d3.event.dy/zoom.scale());
+    node_list = d3.map(node_list); //create a map of the nodes
+    update_node_positions(d, dx, dy, node_list);
+    update_net_position(d, dx, dy);
     redraw_net_sizes();
     update_line_locations();
     update_gui_pos();
