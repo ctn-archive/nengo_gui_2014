@@ -90,11 +90,10 @@ function dragged(d) {
         .attr('transform', "translate(" + [x(d.x), y(d.y)]  + ")");
 
 
-    dx = d3.event.dx/zoom.scale()
-    dy = d3.event.dy/zoom.scale()
+    var dx = d3.event.dx/zoom.scale()
+    var dy = d3.event.dy/zoom.scale()
     var node_list = graph.nodes.slice(0)
-    //sort the nodes by size of full contains (largest to smallest)
-    //node_list.sort(containsCompare);
+
     node_list = d3.map(node_list); //create a map of the nodes
     update_node_positions(d, dx, dy, node_list);
     update_net_position(d, dx, dy);
@@ -120,8 +119,8 @@ function zoomed() {
 //***********************
 var net_widths = {};
 var net_heights = {};
-var net_draw_widths = {};
-var net_draw_heights = {};
+//var net_draw_widths = {};
+//var net_draw_heights = {};
 var net_text_margin = 10;
 
 // Move objects to be drawn on top
@@ -180,19 +179,17 @@ function redraw_net_sizes() {
     node.filter(function (d) {return d.type == 'net';})
         .each(update_net_size)
         .selectAll('rect')
-        .attr('x', function (d) {return -net_draw_widths[d.id]/2;})
-        .attr('y', function (d) {return -net_draw_heights[d.id]/2;})
-        .attr('width', function (d) {return net_draw_widths[d.id];})
-        .attr('height', function (d) {return net_draw_heights[d.id];});
-    node.attr('transform', function (d) {
+        .attr('x', function (d) {return -net_widths[d.id]/2;})
+        .attr('y', function (d) {return -net_heights[d.id]/2;})
+        .attr('width', function (d) {return net_widths[d.id];})
+        .attr('height', function (d) {return net_heights[d.id];});
+        
+    node.attr('transform', function (d) { //update all node positions
         return 'translate(' + [x(d.x), y(d.y)] + ')';});
-    update_net_text();
-}
-
-function update_net_text() {
+        
     node.selectAll("g.node.node_net text") //Position net text
         .attr('y', function (d) {
-            return net_draw_heights[d.id] / 2 + net_text_margin + "px";
+            return net_heights[d.id] / 2 + net_text_margin + "px";
         })
 }
 
@@ -205,30 +202,27 @@ function update_net_size(d) {
     y0 = graph.nodes[d.contains[0]].y;
     y1 = y0;
     for (obj in d.contains) { //min/max of y and x of nodes in net
-        xBorder = 0
-        yBorder = 0
-        tmp = graph.nodes[d.contains[obj]]
-        if (tmp.type == "net") {
-            xBorder = net_widths[tmp.id] / 2 //- net_inner_margin
-            yBorder = net_heights[tmp.id] / 2 //- net_inner_margin
+        xBorder = 0;
+        yBorder = 0;
+        var node = graph.nodes[d.contains[obj]];
+        if (node.type == "net") { //check for subnetworks
+            xBorder = net_widths[node.id] / 2 - net_inner_margin;
+            yBorder = net_heights[node.id] / 2 - net_inner_margin;
         }
-        x0 = Math.min(graph.nodes[d.contains[obj]].x - xBorder, x0);
-        x1 = Math.max(graph.nodes[d.contains[obj]].x + xBorder, x1);
-        y0 = Math.min(graph.nodes[d.contains[obj]].y - yBorder, y0);
-        y1 = Math.max(graph.nodes[d.contains[obj]].y + yBorder, y1);
+        x0 = Math.min(node.x - xBorder, x0);
+        x1 = Math.max(node.x + xBorder, x1);
+        y0 = Math.min(node.y - yBorder, y0);
+        y1 = Math.max(node.y + yBorder, y1);
     }
     d.x = (x0 + x1) / 2; // x, y mid
     d.y = (y0 + y1) / 2;
     dx = d.x - xstart;
     dy = d.y - ystart;
-    net_draw_widths[d.id] = x(x1) - x(x0) + 2 * net_inner_margin; //track corners
-    net_draw_heights[d.id] = y(y1) - y(y0) + 2 * net_inner_margin;
-    net_widths[d.id] = x1 - x0 + 2 * net_inner_margin; //track heights/widths
-    net_heights[d.id] = y1 - y0 + 2 * net_inner_margin;
+    net_widths[d.id] = x(x1) - x(x0) + 2 * net_inner_margin; //track corners
+    net_heights[d.id] = y(y1) - y(y0) + 2 * net_inner_margin;
     
     var node_list = graph.nodes.slice(0)
-    //node_list.sort(containsCompare)
-    //update_node_positions(d, 2 * dx, 2 * dy, d3.map(node_list))
+    update_node_positions(d, x(2 * dx), y(2 * dy), d3.map(node_list))
 }
 
 //Move all the nodes in a network if network position changes
@@ -292,16 +286,13 @@ function removeValue(map, d) {
     }
 }
 
-// is the point x, y inside the net
-function isin(d, x, y) {
-    return (x < d.x + net_widths[d.id] / 2) &&
-        (x > d.x - net_widths[d.id] / 2) &&
-        (y < d.y + net_heights[d.id] / 2) &&
-        (y > d.y - net_heights[d.id] / 2);
-}
-
 //Check if node, n is close to origin object, o
 function close_to(n, o) { //n is node, o is origin
+    var ox = o.x/zoom.scale()
+    var oy = o.y/zoom.scale()
+    var nx = n.x/zoom.scale()
+    var ny = n.y/zoom.scale()
+    var node_margin = node_margins/zoom.scale()
     if (o.type == "net") { //if origin is net
         if (!(n.type == "net")) { //if node is nde or ens
             if (!netContains(n, o)) {
@@ -368,7 +359,7 @@ var graph = null;
 var link = null;
 var linkRecur = null;
 var node = null;
-var node_margin = 35;
+var node_margins = 35;
 var net_inner_margin = 40;
 var net_margin = 15;
 var node_fontsize = 16;
