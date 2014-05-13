@@ -100,6 +100,23 @@ class Converter(object):
         return sum(full_contains.values(),[])
 
     def to_json(self):
+        if not hasattr(self.model, '_created_line_number'):
+            for obj in self.model.ensembles + self.model.nodes + self.model.connections:
+                self.model._created_line_number = obj._created_line_number
+                break
+            else:
+                self.model._created_line_number = 0
+        line = self.model._created_line_number-1
+        label = self.model.label
+        if label == 'Node':
+            label = self.find_identifier(line, label)
+        id = self.namefinder.name(self.model)
+        contains = [self.object_index[obj] for obj in
+                self.model.ensembles + self.model.nodes + self.model.networks]
+        obj = {'label':label, 'line':line, 'id':id, 'type':'mod',
+                   'contains':list(contains)}
+        self.objects.append(obj)
+        
         data = dict(nodes=self.objects, links=self.links)
         pprint.pprint(data)
         return json.dumps(data)
