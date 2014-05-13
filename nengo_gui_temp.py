@@ -2,30 +2,23 @@ import nengo
 
 model = nengo.Network()
 with model:
-    a = nengo.Ensemble(n_neurons=100, dimensions=2, label='int')
-    b = nengo.Ensemble(n_neurons=80, dimensions=2, label='wait')
-    c = nengo.Ensemble(n_neurons=80, dimensions=2)
-    d = nengo.Ensemble(n_neurons=80, dimensions=2)
-    e = nengo.networks.EnsembleArray(80,2, label="array")
+    a = nengo.Ensemble(n_neurons=80, dimensions=2, label="testasdfasdfasdfasfd")
 
-    vis = nengo.Network(label="vision")
+    vis = nengo.Network(label="tester")
     with vis:
+        b = nengo.Ensemble(n_neurons=80, dimensions=2)
+        d = nengo.Ensemble(n_neurons=80, dimensions=2)
 
-		v1 = nengo.Network(label="primary")
-		with v1:
-			f = nengo.Ensemble(n_neurons=80, dimensions=2)
-			g = nengo.Ensemble(n_neurons=80, dimensions=2)
-			nengo.Connection(f, g)
-			nengo.Connection(f, f)
-			
-		r = nengo.Ensemble(n_neurons=80, dimensions=2)
-		t = nengo.Ensemble(n_neurons=80, dimensions=2)
-		nengo.Connection(r, t)
+#       v1 = nengo.Network()
+#       with v1:
+#           c = nengo.Ensemble(n_neurons=80, dimensions=2)
+    nengo.Connection(a,b)
+    nengo.Connection(b,d)
 
-    nengo.Connection(a, a, synapse = 0.01)
-    nengo.Connection(a, b, synapse=0.01)
-    nengo.Connection(b, c, synapse=0.01)
-    nengo.Connection(c, d, synapse=0.01)
-    nengo.Connection(c, r, synapse=0.01)
-    nengo.Connection(b, d, synapse=0.01)
-    nengo.Connection(d, e.input[:2], synapse=0.01)
+import nengo_gui
+gui = nengo_gui.Config()
+gui[a].pos = 200, 100
+gui[vis].pos = 200, 200
+gui[b].pos = -40, 0 #relative to centre of network
+gui[d].pos = 40, 0 #relative to centre of network
+

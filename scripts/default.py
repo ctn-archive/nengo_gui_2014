@@ -18,5 +18,6 @@ with model:
 import nengo_gui
 gui = nengo_gui.Config()
 gui[a].pos = 200, 100
-gui[b].pos = 100, 200
-gui[d].pos = 300, 200
+gui[vis].pos = 200, 200
+gui[b].pos = -40, 0 #relative to centre of network
+gui[d].pos = 40, 0 #relative to centre of network

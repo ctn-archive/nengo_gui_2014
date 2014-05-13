@@ -75,6 +75,10 @@ class Converter(object):
             if label == 'Node':
                 label = self.find_identifier(line, label)
             id = self.namefinder.name(net)
+            
+            pos = self.config[net].pos
+            if pos is None:
+                pos = random.uniform(0, 300), random.uniform(0, 300)
 
             full_contains[i] = self.process(net, id_prefix=id)
 
@@ -85,7 +89,7 @@ class Converter(object):
             
             obj = {'label':label, 'line':line, 'id':id, 'type':'net',
                    'contains':list(contains), 'full_contains': list(full_contains[i]),
-                   'x':random.uniform(0,300), 'y':random.uniform(0,300)}
+                   'x':pos[0], 'y':pos[1]}
             self.object_index[net] = len(self.objects)
             self.objects.append(obj)
 
