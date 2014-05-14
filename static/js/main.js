@@ -81,7 +81,8 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
-    //console.log(d.x, d3.event.dx)
+    console.log(d.x, d3.event.dx, d3.event)
+    d3.event.sourceEvent.stopPropagation();
     dx = d3.event.dx
     dy = d3.event.dy
     if (d.type == 'net' || d.contained_by == -1) {
@@ -89,8 +90,7 @@ function dragged(d) {
         d.y = d.y + dy;
 
         d3.select(this)
-            .attr('transform', "translate(" + [d.x, d.y] 
-                + ")scale(" + this.zoom.scale() + ')');
+            .attr('transform', "translate(" + [d.x, d.y] + ")");
     }
     
     //sort the nodes by size of full contains (largest to smallest)
