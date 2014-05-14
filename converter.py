@@ -20,7 +20,7 @@ class Converter(object):
         self.objects = []
         self.config = config
         self.links = []
-        self.object_index = {}
+        self.object_index = {model:-1}
         self.process(model)
 
     def find_identifier(self, line, default):
@@ -33,6 +33,7 @@ class Converter(object):
 
     def process(self, network, id_prefix=None):
         random.seed(5)
+        
         for i, ens in enumerate(network.ensembles):
             line = ens._created_line_number-1
             label = ens.label
@@ -40,14 +41,14 @@ class Converter(object):
                 label = self.find_identifier(line, label)
             id = self.namefinder.name(ens)
 
-
             pos = self.config[ens].pos
             if pos is None:
                 pos = random.uniform(0, 300), random.uniform(0, 300)
             obj = {'label':label, 'line':line, 'id':id, 'type':'ens',
-                   'x':pos[0], 'y':pos[1]}
+                   'x':pos[0], 'y':pos[1], 'contained_by': self.object_index[network]}
             self.object_index[ens] = len(self.objects)
             self.objects.append(obj)
+            
         for i, nde in enumerate(network.nodes):
             line = nde._created_line_number-1
             label = nde.label
@@ -58,7 +59,7 @@ class Converter(object):
             if pos is None:
                 pos = random.uniform(0, 300), random.uniform(0, 300)
             obj = {'label':label, 'line':line, 'id':id, 'type':'nde',
-                   'x':pos[0], 'y':pos[1]}
+                   'x':pos[0], 'y':pos[1], 'contained_by': self.object_index[network]}
             self.object_index[nde] = len(self.objects)
             self.objects.append(obj)
             
@@ -75,11 +76,13 @@ class Converter(object):
             if label == 'Node':
                 label = self.find_identifier(line, label)
             id = self.namefinder.name(net)
-            
+
             pos = self.config[net].pos
             if pos is None:
                 pos = random.uniform(0, 300), random.uniform(0, 300)
-
+            
+            self.object_index[net] = len(self.objects)
+            self.objects.append({'placeholder':0}) # place holder
             full_contains[i] = self.process(net, id_prefix=id)
 
             contains = [self.object_index[obj] for obj in
@@ -89,9 +92,8 @@ class Converter(object):
             
             obj = {'label':label, 'line':line, 'id':id, 'type':'net',
                    'contains':list(contains), 'full_contains': list(full_contains[i]),
-                   'x':pos[0], 'y':pos[1]}
-            self.object_index[net] = len(self.objects)
-            self.objects.append(obj)
+                   'contained_by': self.object_index[network], 'x':pos[0], 'y':pos[1]}
+            self.objects[self.object_index[net]] = obj
 
 
         for i, conn in enumerate(network.connections):
@@ -118,7 +120,7 @@ class Converter(object):
         contains = [self.object_index[obj] for obj in
                 self.model.ensembles + self.model.nodes + self.model.networks]
         obj = {'label':label, 'line':line, 'id':id, 'type':'mod',
-                   'contains':list(contains)}
+                   'contains':list(contains), 'contained_by': -1}
         self.objects.append(obj)
         
         data = dict(nodes=self.objects, links=self.links)

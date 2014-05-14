@@ -81,20 +81,25 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
-    console.log(d.x, d3.event.dx)
-    d.x = d.x + d3.event.dx;
-    d.y = d.y + d3.event.dy;
+    //console.log(d.x, d3.event.dx)
+    dx = d3.event.dx
+    dy = d3.event.dy
+    if (d.type == 'net' || d.contained_by == -1) {
+        d.x = d.x + dx;
+        d.y = d.y + dy;
 
-    nodes.filter(function (b) {return b.id == d.id})
-        .attr('transform', "translate(" + d.x + "," + d.y + ")");
-
+        d3.select(this)
+            .attr('transform', "translate(" + [d.x, d.y] 
+                + ")scale(" + this.zoom.scale() + ')');
+    }
+    
     //sort the nodes by size of full contains (largest to smallest)
     //var node_list = graph.nodes.slice(0)
     //node_list.sort(containsCompare);
     //node_list = d3.map(node_list); //create a map of the nodes
     //update_node_positions(d, d3.event.dx, d3.event.dy, node_list);
-    //update_net_position(d, d3.event.dx, d3.event.dy);
-    //update_net_sizes();
+    //update_subnet_position(d, d3.event.dx, d3.event.dy);
+    update_net_size(d, dx, dy);
     update_line_locations();
     update_gui_pos();
 }
@@ -107,20 +112,23 @@ function zoomed(d) {
     d3.event.sourceEvent.stopPropagation();
     scale = d3.event.scale;
     translate = d3.event.translate;
-/*
-    //console.log(d3.event.scale);
-    //console.log(d3.event.translate);
     
     if (typeof d == 'undefined') {
         //called at the top level
         thisNetwork = container;
+        thisNetwork.attr("transform", function (d) { //scale & translate everything
+            return "translate(" + translate + ")scale(" + scale + ")"
+        })
     } else {
         thisNetwork = d3.select(this);
+        thisNetwork.attr("transform", function (d) { //scale & translate everything
+            return "translate(" + [d.x+translate[0], d.y+translate[1]] 
+            + ")scale(" + scale + ")"  
+        });
     }
     
-    thisNetwork.attr("transform", function (d) { //scale & translate everything
-        return "translate(" + translate + ")scale(" + scale + ")"
-    });
+    
+
     
     thisNetwork.selectAll('text') //Change the fonts size as a fcn of scale
         .style("font-size", function (d) {
@@ -140,7 +148,7 @@ function zoomed(d) {
         thisNetwork.selectAll(".node_ens text, .node_nde text")
             .text(function (d) {return d.label;});
     }
-    */
+
     //do text later
     //update_net_text();
     //update_net_sizes();
@@ -187,7 +195,7 @@ function layer_network(curNode) {
 }
 
 function update_line_locations() {
-/*    link.filter(function (d) {return d.type == 'std';})
+    link.filter(function (d) {return d.type == 'std';})
         .attr('points', function (d) {
             source = nodes.filter(function (a) {
                 return a == graph.nodes[d.source]})
@@ -207,22 +215,6 @@ function update_line_locations() {
     linkRecur
         .attr('x', function (d) {return graph.nodes[d.source].x})
         .attr('y', function (d) {return graph.nodes[d.source].y})
-        */
-}
-
-//Update all network sizes based on node positions
-function update_net_sizes() {
- /*   nets.filter(function (d) {return d.type == 'net';})
-        .each(update_net_size)
-        .selectAll('rect')
-        .attr('x', function (d) {return -net_widths[d.id] / 2;})
-        .attr('y', function (d) {return -net_heights[d.id] / 2;})
-        .attr('width', function (d) {return net_widths[d.id];})
-        .attr('height', function (d) {return net_heights[d.id];});
-        
-    nodes.attr('transform', function (d) {return 'translate(' + [d.x, d.y] + ')';});
-    //update_net_text();
-*/
 }
 
 function update_net_text() {
@@ -237,50 +229,79 @@ function update_net_text() {
 }
 
 //Update given network size based on node position
-function update_net_size(d) {
-    xstart = 0 //middle of the network
-    ystart = 0
-    x0 = graph.nodes[d.contains[0]].x; //first item in net x,y as a start
-    x1 = x0;
-    y0 = graph.nodes[d.contains[0]].y;
-    y1 = y0;
-    for (obj in d.contains) { //min/max of y and x of nodes in net
-        xBorder = 0
-        yBorder = 0
-        tmp = graph.nodes[d.contains[obj]]
-        if (tmp.type == "net") {
-            xBorder = net_widths[tmp.id] / 2 - net_inner_margin
-            yBorder = net_heights[tmp.id] / 2 - net_inner_margin
+function update_net_size(d, dx, dy) {
+    if (d.contained_by != -1) {
+        net = graph.nodes[d.contained_by]
+
+        xstart = 0 //middle of the network
+        ystart = 0
+        x0 = graph.nodes[net.contains[0]].x; //first item in net x,y as a start
+        x1 = x0;
+        y0 = graph.nodes[net.contains[0]].y;
+        y1 = y0;
+        for (obj in net.contains) { //min/max of y and x of nodes in net
+            xBorder = 0
+            yBorder = 0
+            tmp = graph.nodes[net.contains[obj]]
+            if (tmp.type == "net") {
+                xBorder = net_widths[tmp.id] / 2 - net_inner_margin
+                yBorder = net_heights[tmp.id] / 2 - net_inner_margin
+            }
+            x0 = Math.min(graph.nodes[net.contains[obj]].x - xBorder, x0);
+            x1 = Math.max(graph.nodes[net.contains[obj]].x + xBorder, x1);
+            y0 = Math.min(graph.nodes[net.contains[obj]].y - yBorder, y0);
+            y1 = Math.max(graph.nodes[net.contains[obj]].y + yBorder, y1);
         }
-        x0 = Math.min(graph.nodes[d.contains[obj]].x - xBorder, x0);
-        x1 = Math.max(graph.nodes[d.contains[obj]].x + xBorder, x1);
-        y0 = Math.min(graph.nodes[d.contains[obj]].y - yBorder, y0);
-        y1 = Math.max(graph.nodes[d.contains[obj]].y + yBorder, y1);
-    }
-    //d.x = (x0 + x1) / 2; // x, y mid
-    //d.y = (y0 + y1) / 2;
-    //dx = d.x - xstart;
-    //dy = d.y - ystart;
-    net_widths[d.id] = x1 - x0 + 2 * net_inner_margin; //track heights/widths
-    net_heights[d.id] = y1 - y0 + 2 * net_inner_margin;
+        if (d.x <= x0 || d.x >= x1) {
+            net.x += dx
+            for (i in net.contains) {
+                if (graph.nodes[net.contains[i]] != d) {
+                   graph.nodes[net.contains[i]].x -= dx;
+                }
+            }
+        }
+        if (d.y <= y0 || d.y >= y1) {
+            net.y += dy
+            for (i in net.contains) {
+                if (graph.nodes[net.contains[i]] != d) {
+                   graph.nodes[net.contains[i]].y -= dy;
+                }
+            }
+        }
+        //dx = d.x - xstart;
+        //dy = d.y - ystart;
+        net_widths[net.id] = x1 - x0 + 2 * net_inner_margin; //track heights/widths
+        net_heights[net.id] = y1 - y0 + 2 * net_inner_margin;
     
-    //var node_list = graph.nodes.slice(0)
-    //node_list.sort(containsCompare)
-    //update_node_positions(d, 2 * dx, 2 * dy, d3.map(node_list))
+        //var node_list = graph.nodes.slice(0)
+        //node_list.sort(containsCompare)
+        //update_node_positions(d, 2 * dx, 2 * dy, d3.map(node_list))
+    
+        nets.filter(function (d) {return d.id == net.id;})
+            .select('rect')
+            .attr('x', function (d) {return -net_widths[net.id] / 2;})
+            .attr('y', function (d) {return -net_heights[net.id] / 2;})
+            .attr('width', function (d) {return net_widths[net.id];})
+            .attr('height', function (d) {return net_heights[net.id];});
+        
+        //note: you can't translate the group you are in, so the centre of the
+        //network itself can't be moved, which means this code could cause
+        //the center of the net to stray far from 
+    
+        nets.filter(function (d) {return d.id == net.id})
+            .attr('transform', function (d) {return 'translate(' + [d.x, d.y] + ')';});
+        //update_net_text();
+    }
 }
 
-//Move all the nodes in a network if network position changes
-function update_net_position(d, dx, dy) {
-  /*  if (d.type == "net") {
-        for (var obj in d.contains) {
-            if (graph.nodes[d.contains[obj]].type == "net") {
-                update_net_position(graph.nodes[d.contains[obj]], dx, dy)
-            }
+//Move all the subnets in a network if network position changes
+function update_subnet_positions(d, dx, dy) {
+    for (var obj in d.contains) {
+        if (graph.nodes[d.contains[obj]].type == "net") {
             graph.nodes[d.contains[obj]].x += dx
             graph.nodes[d.contains[obj]].y += dy
         }
     }
-    */
 }
 
 //Update the position of any nodes and what they affect
@@ -505,7 +526,10 @@ function update_graph() {
     top_nodes.enter()
         .append('g')
         .attr('class', function (d) {return 'node node_' + d.type;})
-  
+        .on('mouseover', annotateLine)
+        .on('mouseout', clearAnnotation)
+        .call(drag); 
+        
     nets = container.selectAll('.node_net')
         .data(function (d) {
             thisNodes=[]
@@ -524,7 +548,10 @@ function update_graph() {
         .call(d3.behavior.zoom()
             .scaleExtent([.05, 10])
             .on('zoom', zoomed))
-            
+        .on('mouseover', annotateLine)
+        .on('mouseout', clearAnnotation)
+        .call(drag); 
+                   
     subNodes = nets.selectAll('.node_ens, .node_nde')
         .data(function (d) {
             thisNodes=[]
@@ -539,22 +566,19 @@ function update_graph() {
     subNodes.enter()
         .append('g')
         .attr('class', function (d) {return 'node node_' + d.type;})
+        .on('mouseover', annotateLine)
+        .on('mouseout', clearAnnotation)
+        .call(drag);        
 
     nodes = container.selectAll('.node')
 
     nodes.filter(function (d) {return d.type == 'ens';})
         .append('use')
         .attr('xlink:href', "#ensemble")
-        .on('mouseover', annotateLine)
-        .on('mouseout', clearAnnotation)
-        .call(drag);
         
     nodes.filter(function (d) {return d.type == 'nde';})
         .append('circle')
         .attr('r', '20')
-        .on('mouseover', annotateLine)
-        .on('mouseout', clearAnnotation)
-        .call(drag);
     
     //container.selectAll('g.node text')
     //    .data(graph.nodes, function (d) {return d.id})
@@ -567,9 +591,6 @@ function update_graph() {
         .attr('ry', '15')
         .attr('width', '100')
         .attr('height', '100')
-        .on('mouseover', annotateLine)
-        .on('mouseout', clearAnnotation)
-        .call(drag);
         
     //label everything
     container.selectAll('.node').append('text')
@@ -579,15 +600,21 @@ function update_graph() {
         .attr('y', '30')
         .style('font-size', node_fontsize)
 
+    //draw everything
+    container.selectAll('.node')
+        .attr('transform', function (d) { return 'translate(' + [d.x, d.y] + ')'})
+
     subNodes.exit().remove();
     top_nodes.exit().remove();
     nets.exit().remove();
     link.exit().remove();
     linkRecur.exit().remove();
 
-    //redraw so nodes are on top, lowest level nets 2nd, and so on
-    layer_container();
-    update_net_sizes();
+    layer_container(); //redraw so nodes are on top, lowest level nets 2nd, and so on
+
+    for (i in graph.nodes) { //set up all network sizes
+        update_net_size(graph.nodes[i], 0, 0);
+    }
     update_line_locations();
     resize();
 }
