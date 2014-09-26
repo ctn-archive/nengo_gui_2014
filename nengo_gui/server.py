@@ -89,11 +89,12 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         </form>""" % message
 
     @classmethod
-    def set_default_filename(klass, fn):
+    def set_default_filename(klass, fn, argv):
         klass.default_filename = fn
         path, fn = os.path.split(fn)
         klass.script_path = path
         klass.default_filename = fn
+        klass.argv = argv
 
     @classmethod
     def set_simulator_class(klass, simulator_class):
@@ -157,7 +158,13 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         if self.user is None: return
         code = code.replace('\r\n', '\n')
 
+        init_args = compile('''
+import sys
+sys.argv = {}
+'''.format(repr([code_fn] + self.argv)), '', 'exec')
+        c = compile(code, code_fn, 'exec')
         locals = {}
+        exec init_args in locals
         exec code in locals
 
         model = locals['model']
@@ -209,8 +216,13 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
             f.write(code)
 
         try:
+            init_args = compile('''
+import sys
+sys.argv = {}
+'''.format(repr([code_fn] + self.argv)), '', 'exec')
             c = compile(code, code_fn, 'exec')
             locals = {}
+            exec init_args in locals
             exec c in locals
         except (SyntaxError, Exception):
             try:
