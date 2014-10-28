@@ -75,7 +75,8 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
     def swi(self):
         if self.user is None:
             return self.create_login_form()
-        html = pkgutil.get_data('nengo_gui', 'templates/index.html')
+        html = pkgutil.get_data('nengo_gui', 'templates/index.html').format(
+            svg_template=nengo.vis.ipython.SVG_TEMPLATE)
         if javaviz is None:
             use_javaviz = 'false'
         else:
