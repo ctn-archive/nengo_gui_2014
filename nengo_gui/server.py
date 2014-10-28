@@ -3,7 +3,7 @@ import os.path
 import json
 import traceback
 import sys
-from nengo_gui.feedforward_layout import feedforward_layout
+from nengo.vis.feedforward_layout import feedforward_layout
 import nengo_gui.converter
 import nengo_gui.layout
 import nengo_gui.nengo_helper
@@ -267,9 +267,9 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
             cfg = nengo_gui.Config()
 
             conv = nengo_gui.converter.Converter(model, code.splitlines(), locals, cfg)
-            feedforward_layout(model, cfg, locals, conv.links, conv.objects)
-            conv.global_scale = 1.0
-            conv.global_offset = 0.0, 0.0
+            feedforward_layout(conv.modelgraph, cfg)
+            cfg[conv.modelgraph.top.nengo_object].scale = 1.0
+            cfg[conv.modelgraph.top.nengo_object].offset = 0.0, 0.0
         else:
             cfg = locals.get('gui', None)
             if cfg is None:
