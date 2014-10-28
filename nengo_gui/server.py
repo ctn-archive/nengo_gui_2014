@@ -3,6 +3,7 @@ import os.path
 import json
 import traceback
 import sys
+import nengo.vis.ipython
 from nengo.vis.feedforward_layout import feedforward_layout
 import nengo_gui.converter
 import nengo_gui.layout
@@ -59,7 +60,12 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         else:
             raise Exception('unknown extenstion for %s' % fn)
 
-        data = pkgutil.get_data('nengo_gui', fn)
+        if path[-1] == 'd3.min.js':
+            data = nengo.vis.ipython.get_d3_js()
+        elif path[-1] == 'graph.css':
+            data = nengo.vis.ipython.get_svg_css()
+        else:
+            data = pkgutil.get_data('nengo_gui', fn)
         return (mimetype, data)
 
     def swi_favicon_ico(self):
