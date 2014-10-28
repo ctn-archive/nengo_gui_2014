@@ -64,6 +64,8 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
             data = nengo.vis.ipython.get_d3_js()
         elif path[-1] == 'graph.css':
             data = nengo.vis.ipython.get_svg_css()
+        elif path[-1] == 'base.js':
+            data = nengo.vis.ipython.get_main_js()
         else:
             data = pkgutil.get_data('nengo_gui', fn)
         return (mimetype, data)

@@ -6,8 +6,8 @@ var server_last_modified_time = null;
 
 function clear_and_open_file(file) {
     // force a complete clearing of previous data
-    container.selectAll('.link').remove();
-    container.selectAll('.node').remove();
+    ModelVisGui.container.selectAll('.link').remove();
+    ModelVisGui.container.selectAll('.node').remove();
     editor.setValue('');    
     
     open_file(file);
