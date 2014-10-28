@@ -35,7 +35,7 @@ class NameFinder(object):
         for n in net.networks:
             self.find_names(n)
 
-    def name(self, obj):
+    def get_id(self, obj):
         return self.known_name[id(obj)]
 
 
