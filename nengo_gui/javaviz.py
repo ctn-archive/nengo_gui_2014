@@ -84,7 +84,7 @@ class View:
 
         self.model = model
         self.net = net
-        self.initialize_vocabs()
+        self.initialize_vocabs(model)
 
     def get_all_probes(self, network):
         for subnet in network.networks:
@@ -92,8 +92,9 @@ class View:
             self.all_probes.extend(network.probes)
         self.all_probes.extend(network.probes)
 
-    def initialize_vocabs(self):
+    def initialize_vocabs(self, model):
         vocabs = []
+        # grab vocabs out of SPA modules
         if hasattr(self.model, '_modules'):
             for m in self.model._modules.values():
                 for obj, v in m.inputs.values():
@@ -102,10 +103,12 @@ class View:
                 for obj, v in m.outputs.values():
                     if v not in vocabs:
                         vocabs.append(v)
+        # grab any manually specified vocabs
         for obj, remote in self.remote_objs.items():
-            if hasattr(obj, 'vocab'):
-                if obj.vocab not in vocabs:
-                    vocabs.append(obj.vocab)
+            v = getattr(model.config[obj], 'vocab', None)
+            if v is not None and v not in vocabs:
+                vocabs.append(model.config[obj].vocab)
+        # send the vocabs to the remote host
         for local in vocabs:
             remote = self.rpyc.modules.hrr.Vocabulary(
                 dimensions=local.dimensions,
