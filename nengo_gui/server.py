@@ -3,7 +3,8 @@ import os.path
 import json
 import traceback
 import sys
-from nengo_gui.feedforward_layout import feedforward_layout
+import nengo.vis.ipython
+from nengo.vis.feedforward_layout import feedforward_layout
 import nengo_gui.converter
 import nengo_gui.layout
 import nengo_gui.nengo_helper
@@ -59,7 +60,14 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         else:
             raise Exception('unknown extenstion for %s' % fn)
 
-        data = pkgutil.get_data('nengo_gui', fn)
+        if path[-1] == 'd3.min.js':
+            data = nengo.vis.ipython.get_d3_js()
+        elif path[-1] == 'graph.css':
+            data = nengo.vis.ipython.get_svg_css()
+        elif path[-1] == 'base.js':
+            data = nengo.vis.ipython.get_main_js()
+        else:
+            data = pkgutil.get_data('nengo_gui', fn)
         return (mimetype, data)
 
     def swi_favicon_ico(self):
@@ -69,7 +77,8 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
     def swi(self):
         if self.user is None:
             return self.create_login_form()
-        html = pkgutil.get_data('nengo_gui', 'templates/index.html')
+        html = pkgutil.get_data('nengo_gui', 'templates/index.html').format(
+            svg_template=nengo.vis.ipython.SVG_TEMPLATE)
         if javaviz is None:
             use_javaviz = 'false'
         else:
@@ -267,9 +276,9 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
             cfg = nengo_gui.Config()
 
             conv = nengo_gui.converter.Converter(model, code.splitlines(), locals, cfg)
-            feedforward_layout(model, cfg, locals, conv.links, conv.objects)
-            conv.global_scale = 1.0
-            conv.global_offset = 0.0, 0.0
+            feedforward_layout(conv.modelgraph, cfg)
+            cfg[conv.modelgraph.top.nengo_object].scale = 1.0
+            cfg[conv.modelgraph.top.nengo_object].offset = 0.0, 0.0
         else:
             cfg = locals.get('gui', None)
             if cfg is None:
