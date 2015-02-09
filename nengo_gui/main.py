@@ -20,6 +20,9 @@ def main():
         default=8080, type=int, help='port to run server on')
     parser.add_argument(
         'filename', nargs='?', type=str, help='initial file to load')
+    parser.add_argument(
+        'options', nargs=argparse.REMAINDER,
+        help='options to be passed on to the script')
     args = parser.parse_args()
 
     NengoGui.set_refresh_interval(args.refresh)
@@ -29,7 +32,7 @@ def main():
         NengoGui.set_realtime_simulator_mode(True)
 
     if args.filename is not None:
-        NengoGui.set_default_filename(args.filename)
+        NengoGui.set_default_filename(args.filename, args.options)
 
     addr = 'localhost'
     if args.password is not None:
