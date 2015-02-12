@@ -145,18 +145,20 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         return repr(os.stat(fn).st_mtime)
 
     def swi_nengo_viz(self, filename, code):
-        if self.user is None: return            
-        
+        if self.user is None: return
+
         code = code.replace('\r\n', '\n')
 
         locals = {}
         exec code in locals
 
         model = locals['model']
-        
-        viz = nengo_viz.Viz(model)
+
+        nf = nengo_gui.namefinder.NameFinder(locals, model)
+
+        viz = nengo_viz.Viz(model, default_labels=nf.known_name)
         nengo_viz.server.Server.viz = viz
-        
+
         for ens in model.all_ensembles:
             viz.value(ens)
         for node in model.all_nodes:
@@ -164,40 +166,13 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
                 viz.slider(node)
             else:
                 viz.value(node)
-        
+
         if not self.nengo_viz_started:
-            thread.start_new_thread(nengo_viz.server.Server.start, (), 
+            thread.start_new_thread(nengo_viz.server.Server.start, (),
                                     dict(port=8080, browser=False))
             self.nengo_viz_started = True
-            
-        return '8080'
-            
-        return '''<html><head>
-            <meta http-equiv="refresh" content="0; url=http://localhost:8888/" />
-            </head></html>'''
-        
-                
-        nf = nengo_gui.namefinder.NameFinder(locals, model)
 
-        jv = javaviz.View(model, default_labels=nf.known_name,
-                          filename=filename, realtime=self.realtime_simulator)
-        if model_config is not None:
-            sim = self.simulator_class(model, config=model_config)
-        else:
-            sim = self.simulator_class(model)
-        jv.update_model(sim)
-        jv.view(config=cfg)
-        try:
-            if self.realtime_simulator:
-                sim.run()
-            else:
-                while True:
-                    try:
-                        sim.run(1)
-                    except javaviz.VisualizerResetException:
-                        sim.reset()
-        except javaviz.VisualizerExitException:
-            print('Finished running JavaViz simulation')
+        return '8080'
 
 
     def swi_graph_json(self, code, feedforward=False):
