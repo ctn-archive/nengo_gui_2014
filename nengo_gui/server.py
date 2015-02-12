@@ -166,6 +166,12 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
                 viz.slider(node)
             else:
                 viz.value(node)
+        for probe in model.all_probes:
+            if isinstance(probe.obj, nengo.ensemble.Neurons):
+                n_neurons = probe.obj.size_out
+                if n_neurons > 25:
+                    n_neurons = 25
+                viz.raster(probe.obj, n_neurons=n_neurons)
 
         if not self.nengo_viz_started:
             thread.start_new_thread(nengo_viz.server.Server.start, (),
