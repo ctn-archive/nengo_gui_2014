@@ -159,19 +159,20 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         viz = nengo_viz.Viz(model, default_labels=nf.known_name)
         nengo_viz.server.Server.viz = viz
 
-        for ens in model.all_ensembles:
-            viz.value(ens)
         for node in model.all_nodes:
             if node.size_in == 0 and node.size_out > 0:
                 viz.slider(node)
             else:
                 viz.value(node)
+        for ens in model.all_ensembles:
+            viz.value(ens)
         for probe in model.all_probes:
             if isinstance(probe.obj, nengo.ensemble.Neurons):
                 n_neurons = probe.obj.size_out
                 if n_neurons > 25:
                     n_neurons = 25
                 viz.raster(probe.obj, n_neurons=n_neurons)
+        viz.tile_components(row_height=250, col_width=250)
 
         if not self.nengo_viz_started:
             thread.start_new_thread(nengo_viz.server.Server.start, (),
