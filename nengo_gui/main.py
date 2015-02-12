@@ -17,7 +17,7 @@ def main():
         default="nengo", type=str, help='simulator platform')
     parser.add_argument(
         '-P', '--port', dest='port', metavar='PORT',
-        default=8080, type=int, help='port to run server on')
+        default=8000, type=int, help='port to run server on')
     parser.add_argument(
         'filename', nargs='?', type=str, help='initial file to load')
     args = parser.parse_args()

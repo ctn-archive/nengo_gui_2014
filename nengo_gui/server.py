@@ -11,30 +11,20 @@ import nengo_gui.namefinder
 import nengo
 import os
 import urllib
+import thread
 
 import nengo_gui
 import pkgutil
 import tempfile
 
 import socket
-try:
-    import rpyc
-    s = rpyc.classic.connect('localhost')
-    assert s.modules.timeview.javaviz.__name__ == 'timeview.javaviz'
-    import javaviz
-    javaviz_message = 'run with JavaViz'
-except ImportError:
-    javaviz_message = 'JavaViz disabled as rpyc is not installed.'
-    javaviz_message += ' Try "pip install rpyc"'
-    javaviz = None
-except socket.error:
-    javaviz_message = 'JavaViz disabled as the javaviz server is not running'
-    javaviz = None
-except AssertionError:
-    javaviz_message = 'JavaViz disabled due to an unknown server error.'
-    javaviz_message += ' Please reinstall and re-run the JavaViz server'
-    javaviz = None
 
+try:
+    import nengo_viz
+    nengo_viz_message = 'Run model'
+except ImportError:
+    nengo_viz = None
+    nengo_viz_message = 'nengo_viz not installed'
 
 
 class NengoGui(nengo_gui.swi.SimpleWebInterface):
@@ -43,6 +33,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
     refresh_interval = 0
     realtime_simulator = False
     simulator_class = nengo.Simulator
+    nengo_viz_started = False
 
 
     def swi_static(self, *path):
@@ -70,14 +61,14 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         if self.user is None:
             return self.create_login_form()
         html = pkgutil.get_data('nengo_gui', 'templates/index.html')
-        if javaviz is None:
-            use_javaviz = 'false'
+        if nengo_viz is None:
+            use_nengo_viz = 'false'
         else:
-            use_javaviz = 'true'
+            use_nengo_viz = 'true'
         return html % dict(filename=self.default_filename,
                            refresh_interval=self.refresh_interval,
-                           use_javaviz=use_javaviz,
-                           javaviz_message=javaviz_message)
+                           use_nengo_viz=use_nengo_viz,
+                           nengo_viz_message=nengo_viz_message)
 
     def create_login_form(self):
         message = "Enter the password:"
@@ -153,21 +144,39 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         fn = os.path.join(self.script_path, filename)
         return repr(os.stat(fn).st_mtime)
 
-    def swi_javaviz(self, filename, code):
-        if self.user is None: return
+    def swi_nengo_viz(self, filename, code):
+        if self.user is None: return            
+        
         code = code.replace('\r\n', '\n')
 
         locals = {}
         exec code in locals
 
         model = locals['model']
-        cfg = locals.get('gui', None)
-        if cfg is None:
-            cfg = nengo_gui.Config()
-
-        model_config = locals.get('config', None)
-
-
+        
+        viz = nengo_viz.Viz(model)
+        nengo_viz.server.Server.viz = viz
+        
+        for ens in model.all_ensembles:
+            viz.value(ens)
+        for node in model.all_nodes:
+            if node.size_in == 0 and node.size_out > 0:
+                viz.slider(node)
+            else:
+                viz.value(node)
+        
+        if not self.nengo_viz_started:
+            thread.start_new_thread(nengo_viz.server.Server.start, (), 
+                                    dict(port=8080, browser=False))
+            self.nengo_viz_started = True
+            
+        return '8080'
+            
+        return '''<html><head>
+            <meta http-equiv="refresh" content="0; url=http://localhost:8888/" />
+            </head></html>'''
+        
+                
         nf = nengo_gui.namefinder.NameFinder(locals, model)
 
         jv = javaviz.View(model, default_labels=nf.known_name,

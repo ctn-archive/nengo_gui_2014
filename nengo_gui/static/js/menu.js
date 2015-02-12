@@ -116,14 +116,22 @@ function check_server_for_file_changes() {
     xhr.send(data);
 }
 
-function do_javaviz() {
+function do_nengo_viz() {
     var data = new FormData();
     data.append('code', editor.getValue());
     data.append('filename', $('#filename').val());
     
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/javaviz', true);
+    console.log(1);
+    xhr.open('POST', '/nengo_viz', true);
+    console.log(2);
+    xhr.onload = function (event) {
+        console.log(3);
+        console.log(this.responseText);
+        window.open('http://localhost:' + this.responseText);
+    }
     xhr.send(data);
+    console.log(4);
 }
 
 function handle_hotkeys(e) {
@@ -169,10 +177,10 @@ $(document).ready(function () {
                            gui_server_check_interval);
     }
 
-    if (!use_javaviz) {
-        $('#menu_javaviz').addClass('disable');
+    if (!use_nengo_viz) {
+        $('#menu_nengo_viz').addClass('disable');
     } else {
-        $('#menu_javaviz').click(do_javaviz);
+        $('#menu_nengo_viz').click(do_nengo_viz);
     }
 
     window.onkeyup = handle_hotkeys;
