@@ -12,9 +12,11 @@ class NameFinder(object):
         net_name = self.known_name[id(net)]
 
         base_lists = ['ensembles', 'nodes', 'connections', 'networks']
+        all_lists = ['all_ensembles', 'all_nodes',
+                     'all_connections', 'all_networks', 'all_objects']
 
         for k in dir(net):
-            if not k.startswith('_') and k not in base_lists:
+            if not k.startswith('_') and k not in base_lists + all_lists:
                 v = getattr(net, k)
                 if isinstance(v, list):
                     for i, obj in enumerate(v):
