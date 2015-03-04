@@ -126,6 +126,19 @@ function do_javaviz() {
     xhr.send(data);
 }
 
+function do_nengo_viz() {
+    var data = new FormData();
+    data.append('code', editor.getValue());
+    data.append('filename', $('#filename').val());
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/nengo_viz', true);
+    xhr.onload = function (event) {
+        window.open('http://localhost:' + this.responseText);
+    }
+    xhr.send(data);
+}
+
 function handle_hotkeys(e) {
     e = e || event;
     var keyCode = ('which' in e) ? e.which : e.keyCode;
@@ -174,6 +187,13 @@ $(document).ready(function () {
     } else {
         $('#menu_javaviz').click(do_javaviz);
     }
+
+    if (!use_nengo_viz) {
+        $('#menu_nengo_viz').addClass('disable');
+    } else {
+        $('#menu_nengo_viz').click(do_nengo_viz);
+    }
+
 
     window.onkeyup = handle_hotkeys;
 });

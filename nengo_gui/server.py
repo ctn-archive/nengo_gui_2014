@@ -11,6 +11,7 @@ import nengo_gui.namefinder
 import nengo
 import os
 import urllib
+import thread
 
 import nengo_gui
 import pkgutil
@@ -35,6 +36,14 @@ except AssertionError:
     javaviz_message += ' Please reinstall and re-run the JavaViz server'
     javaviz = None
 
+try:
+    import nengo_viz
+    nengo_viz_message = 'Run model'
+except ImportError:
+    nengo_viz = None
+    nengo_viz_message = 'nengo_viz not installed'
+
+
 
 
 class NengoGui(nengo_gui.swi.SimpleWebInterface):
@@ -43,6 +52,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
     refresh_interval = 0
     realtime_simulator = False
     simulator_class = nengo.Simulator
+    nengo_viz_started = False
 
 
     def swi_static(self, *path):
@@ -74,10 +84,17 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
             use_javaviz = 'false'
         else:
             use_javaviz = 'true'
+        if nengo_viz is None:
+            use_nengo_viz = 'false'
+        else:
+            use_nengo_viz = 'true'
+
         return html % dict(filename=self.default_filename,
                            refresh_interval=self.refresh_interval,
                            use_javaviz=use_javaviz,
-                           javaviz_message=javaviz_message)
+                           use_nengo_viz=use_nengo_viz,
+                           javaviz_message=javaviz_message,
+                           nengo_viz_message=nengo_viz_message)
 
     def create_login_form(self):
         message = "Enter the password:"
@@ -189,6 +206,42 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
                         sim.reset()
         except javaviz.VisualizerExitException:
             print('Finished running JavaViz simulation')
+
+    def swi_nengo_viz(self, filename, code):
+        if self.user is None: return
+        code = code.replace('\r\n', '\n')
+
+        locals = {}
+        exec code in locals
+
+        model = locals['model']
+
+        nf = nengo_gui.namefinder.NameFinder(locals, model)
+
+        viz = nengo_viz.Viz(model, default_labels=nf.known_name)
+        nengo_viz.server.Server.viz = viz
+
+        for node in model.all_nodes:
+            if node.size_in == 0 and node.size_out > 0:
+                viz.slider(node)
+        for probe in model.all_probes:
+            if isinstance(probe.obj, nengo.Ensemble):
+                viz.value(probe.obj)
+            if isinstance(probe.obj, nengo.Node):
+                viz.value(probe.obj)
+            if isinstance(probe.obj, nengo.ensemble.Neurons):
+                n_neurons = probe.obj.size_out
+                viz.raster(probe.obj, n_neurons=min(n_neurons, 25))
+        viz.tile_components(row_height=250, col_width=250)
+
+        port = 8080
+
+        if not self.nengo_viz_started:
+            thread.start_new_thread(nengo_viz.server.Server.start, (),
+                                    dict(port=port, browser=False))
+            self.nengo_viz_started = True
+
+        return '%d' % port
 
 
     def swi_graph_json(self, code, feedforward=False):
