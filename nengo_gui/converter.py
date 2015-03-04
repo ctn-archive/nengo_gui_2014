@@ -33,6 +33,8 @@ class Converter(object):
             line = ens._created_line_number-1
             label = ens.label
             id = self.namefinder.name(ens)
+            if label is None:
+                label = id
 
             pos = self.config[ens].pos
             scale = self.config[ens].scale
@@ -56,6 +58,8 @@ class Converter(object):
             if label == 'Node':
                 label = ''
             id = self.namefinder.name(nde)
+            if label is None:
+                label = id
 
             pos = self.config[nde].pos
             scale = self.config[nde].scale
@@ -83,6 +87,8 @@ class Converter(object):
             line = net._created_line_number-1
             label = net.label
             id = self.namefinder.name(net)
+            if label is None:
+                label = id
 
             self.object_index[net] = len(self.objects)
             self.objects.append({'placeholder':0}) # place holder
