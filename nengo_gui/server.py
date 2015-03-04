@@ -13,6 +13,8 @@ import os
 import urllib
 import thread
 
+import nengo.spa
+
 import nengo_gui
 import pkgutil
 import tempfile
@@ -232,6 +234,9 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
             if isinstance(probe.obj, nengo.ensemble.Neurons):
                 n_neurons = probe.obj.size_out
                 viz.raster(probe.obj, n_neurons=min(n_neurons, 25))
+        for net in model.networks:
+            if isinstance(net, nengo.spa.Buffer):
+                viz.pointer(net)
         viz.tile_components(row_height=250, col_width=250)
 
         port = 8080
