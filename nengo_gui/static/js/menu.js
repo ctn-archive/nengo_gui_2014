@@ -28,6 +28,7 @@ function open_file(file) {
     xhr.onload = function (event) {
         r = JSON.parse(this.responseText);
         editor.setValue(r.text);
+        editor.moveCursorTo(0, 0, false);
         server_last_modified_time = r.mtime;
         $('#menu_save').addClass('disable');
     };
