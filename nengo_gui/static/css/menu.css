@@ -77,6 +77,12 @@ img#menu_javaviz {
     left: calc(100% - 50px);
 }
 
+img#menu_nengo_viz {
+    position: absolute;
+    top: 10px;
+    left: calc(100% - 100px);
+}
+
 img#menu_feedfwd {
     position: absolute;
     top: 10px;
