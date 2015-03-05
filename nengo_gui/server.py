@@ -315,6 +315,11 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
                 # gui[model.ensemble[i]].pos statement for something that has
                 # been deleted
                 pass
+            except KeyError:
+                # this is generally caused by having a gui[input].pos statement
+                #  for something that has been deleted but happened to have
+                #  the same name as a builtin
+                pass
 
         model = locals.get('model', None)
         if model is None:
