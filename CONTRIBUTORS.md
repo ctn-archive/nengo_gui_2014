@@ -18,9 +18,9 @@ to the file like so:
 
 Please keep this list sorted alphabetically.
 
-- Andrew Mundy <andrew.mundy@ieee.org>
-- Chris Eliasmith <celiasmith@uwaterloo.ca>
-- Eric Crawford <e2crawfo@uwaterloo.ca>
 - Sean Aubin <seanaubin@gmail.com>
-- Terry Stewart <terry.stewart@gmail.com>
 - Trevor Bekolay <tbekolay@gmail.com>
+- Eric Crawford <e2crawfo@uwaterloo.ca>
+- Chris Eliasmith <celiasmith@uwaterloo.ca>
+- Andrew Mundy <andrew.mundy@ieee.org>
+- Terry Stewart <terry.stewart@gmail.com>
