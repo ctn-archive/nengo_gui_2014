@@ -16,7 +16,7 @@ to the file like so:
 - Name <email address>
 ```
 
-Please keep this list sorted alphabetically.
+Please keep this list sorted alphabetically by first name.
 
 - Andrew Mundy <andrew.mundy@ieee.org>
 - Chris Eliasmith <celiasmith@uwaterloo.ca>
