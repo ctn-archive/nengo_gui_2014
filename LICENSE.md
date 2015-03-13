@@ -20,12 +20,12 @@ Nengo GUI depends on several open source libraries.
   [MIT license](https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt)
 * [ace](http://ace.c9.io/) - Used under
   [BSD license](https://github.com/ajaxorg/ace/blob/master/LICENSE)
-* [jQueryFileTree] - Used under
-  [MIT license](http://www.abeautifulsite.net/blog/2008/03/jquery-file-tree/)
-* [GNOME icon set](http://commons.wikimedia.org/wiki/GNOME_Desktop_icons) -
-  Used under GPL license
+* [jQueryFileTree](http://www.abeautifulsite.net/blog/2008/03/jquery-file-tree/) - Used under
+  [MIT license](http://www.abeautifulsite.net/jquery-file-tree/#licensing)
+* [Tango icon set](http://tango.freedesktop.org/) - Released to the
+  [public domain](http://tango.freedesktop.org/#Terms_Of_Use)
 
-Contributor Assignemnt Agreement
+Contributor Assignment Agreement
 ================================
 
 Harmony (HA-CAA-I-ANY) Version 1.0
@@ -38,7 +38,7 @@ Thank you for your interest in contributing to Nengo GUI ("We" or
 granted by contributors to Us. To make this document effective, please
 sign it and send it to Us by electronic submission, following the
 instructions at
-<https://github.com/ctn-waterloo/nengo_gui/blob/master/CONTRIBUTORS.md>.
+<https://github.com/nengo/nengo_gui/blob/master/CONTRIBUTORS.md>.
 This is a legally binding document, so please read it carefully before
 agreeing to it. The Agreement may cover more than one software project
 managed by Us.
@@ -51,7 +51,7 @@ managed by Us.
 to Us in which You own or assert ownership of the Copyright. If You do
 not own the Copyright in the entire work of authorship, please follow
 the instructions in
-<https://github.com/ctn-waterloo/nengo_gui/blob/master/CONTRIBUTORS.md>.
+<https://github.com/nengo/nengo_gui/blob/master/CONTRIBUTORS.md>.
 
 "Copyright" means all rights protecting works of authorship owned or
 controlled by You, including copyright, moral and neighboring rights,
@@ -173,7 +173,7 @@ than eighteen years old, please have Your parents or guardian sign the
 Agreement.
 
 (d) You have followed the instructions in
-<https://github.com/ctn-waterloo/nengo_gui/blob/master/CONTRIBUTORS.md>,
+<https://github.com/nengo/nengo_gui/blob/master/CONTRIBUTORS.md>,
 if You do not own the Copyright in the entire work of authorship
 Submitted.
 
