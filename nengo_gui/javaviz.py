@@ -68,10 +68,10 @@ class View:
         self.probe_count = 0
         self.input_count = 0
         self.all_probes = []
-        
+
         self.get_all_probes(model)
         self.process_network(net, model, names=[])
-        
+
         if self.probe_count == 0:
             # need at least one probe to let the synchronizing system work
             # so we make a dummy one
@@ -227,7 +227,7 @@ class View:
                             output_dims = len(output)
                         obj._output_dims = output_dims
                         input = remote_net.make_input(name, tuple([0]*output_dims))
-                        obj.output = OverrideFunction(self, obj.output, 
+                        obj.output = OverrideFunction(self, obj.output,
                                     self.input_count)
                         self.control_node.register(self.input_count, input)
                         self.input_count += 1
@@ -250,10 +250,10 @@ class View:
 
         for c in network.connections:
             # handle direct connections
-            pre = c.pre
+            pre = c.pre_obj
             if isinstance(pre, nengo.ensemble.Neurons):
                 pre = pre.ensemble
-            post = c.post
+            post = c.post_obj
             if isinstance(post, nengo.ensemble.Neurons):
                 post = post.ensemble
 
