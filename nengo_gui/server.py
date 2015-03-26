@@ -218,9 +218,8 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
 
         model = locals['model']
 
-        nf = nengo_gui.namefinder.NameFinder(locals, model)
-
-        viz = nengo_viz.Viz(model, default_labels=nf.known_name)
+        fn = os.path.join(self.script_path, filename)
+        viz = nengo_viz.Viz(model, locals=locals, filename=fn)
         nengo_viz.server.Server.viz = viz
 
         for node in model.all_nodes:
