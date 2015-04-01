@@ -219,24 +219,8 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         model = locals['model']
 
         fn = os.path.join(self.script_path, filename)
-        viz = nengo_viz.Viz(model, locals=locals, filename=fn)
+        viz = nengo_viz.Viz(filename=fn, model=model, locals=locals)
         nengo_viz.server.Server.viz = viz
-
-        for node in model.all_nodes:
-            if node.size_in == 0 and node.size_out > 0:
-                viz.slider(node)
-        for probe in model.all_probes:
-            if isinstance(probe.obj, nengo.Ensemble):
-                viz.value(probe.obj)
-            if isinstance(probe.obj, nengo.Node):
-                viz.value(probe.obj)
-            if isinstance(probe.obj, nengo.ensemble.Neurons):
-                n_neurons = probe.obj.size_out
-                viz.raster(probe.obj, n_neurons=min(n_neurons, 25))
-        for net in model.networks:
-            if isinstance(net, nengo.spa.Buffer):
-                viz.pointer(net)
-        viz.tile_components(row_height=250, col_width=250)
 
         port = 8080
 
