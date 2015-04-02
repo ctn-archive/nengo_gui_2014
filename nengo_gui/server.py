@@ -218,8 +218,6 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         if self.user is None: return
         code = code.replace('\r\n', '\n')
         fn = os.path.join(self.script_path, filename)
-        with open(fn, 'w') as f:
-            f.write(code)
 
         locals = {}
         exec(code, locals)
