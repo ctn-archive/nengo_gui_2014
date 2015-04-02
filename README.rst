@@ -11,7 +11,7 @@ Requirements
 ============
 
  - Python (tested with Python 2.7 and Python 3.4)
- - Nengo
+ - Nengo (which also requires NumPy)
 
 Installation
 ============
