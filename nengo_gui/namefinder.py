@@ -4,7 +4,7 @@ class NameFinder(object):
     def __init__(self, terms, net):
         self.base_terms = terms
         self.known_name = {}
-        for k, v in terms.iteritems():
+        for k, v in terms.items():
             self.known_name[id(v)] = k
         self.find_names(net)
 
@@ -20,7 +20,7 @@ class NameFinder(object):
                 v = getattr(net, k)
                 if isinstance(v, list):
                     for i, obj in enumerate(v):
-                        if not self.known_name.has_key(id(obj)):
+                        if id(obj) not in self.known_name:
                             n = '%s.%s[%d]' % (net_name, k, i)
                             self.known_name[id(obj)] = n
                 else:
@@ -46,12 +46,12 @@ class NameFinder(object):
 if __name__ == '__main__':
     c = compile(open('scripts/default.py').read(), 'nengo_gui_temp.py', 'exec')
     locals = {}
-    exec c in globals(), locals
+    exec(c, globals(), locals)
 
     model = locals['model']
     ident = NameFinder(locals, model)
     ident.find_names(locals['model'])
 
-    print ident.known_name
+    print(ident.known_name)
 
 

@@ -1,7 +1,7 @@
 import json
 import re
 import keyword
-import namefinder
+import nengo_gui.namefinder as namefinder
 
 import pprint
 import nengo
