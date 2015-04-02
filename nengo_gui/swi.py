@@ -311,8 +311,10 @@ def start(klass, port=80, asynch=True, addr=''):
     server.serve_forever()
 
 def browser(port=80):
-    threading.Thread(target=webbrowser.open,
-                     args=('http://localhost:%d'%port,)).start()
+    t = threading.Thread(target=webbrowser.open,
+                     args=('http://localhost:%d'%port,))
+    t.daemon = True
+    t.start()
 
 
 if __name__=='__main__':

@@ -230,8 +230,10 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         port = 8080
 
         if not self.nengo_viz_started:
-            threading.Thread(target=nengo_viz.server.Server.start,
-                             kwargs=dict(port=port, browser=False)).start()
+            t = threading.Thread(target=nengo_viz.server.Server.start,
+                             kwargs=dict(port=port, browser=False))
+            t.daemon = True
+            t.start()
             self.nengo_viz_started = True
 
         return '%d' % port
