@@ -217,13 +217,15 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
     def swi_nengo_viz(self, filename, code):
         if self.user is None: return
         code = code.replace('\r\n', '\n')
+        fn = os.path.join(self.script_path, filename)
+        with open(fn, 'w') as f:
+            f.write(code)
 
         locals = {}
         exec(code, locals)
 
         model = locals['model']
 
-        fn = os.path.join(self.script_path, filename)
         viz = nengo_viz.Viz(filename=fn, model=model, locals=locals)
         nengo_viz.server.Server.viz = viz
 
