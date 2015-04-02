@@ -10,8 +10,12 @@ import nengo_gui.nengo_helper
 import nengo_gui.namefinder
 import nengo
 import os
-import urllib
-import thread
+try:
+    from urllib import unquote
+except ImportError:
+    from urllib.parse import unquote
+
+import threading
 
 import nengo.spa
 
@@ -82,6 +86,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         if self.user is None:
             return self.create_login_form()
         html = pkgutil.get_data('nengo_gui', 'templates/index.html')
+        html = html.decode("utf-8")
         if javaviz is None:
             use_javaviz = 'false'
         else:
@@ -132,7 +137,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         if self.user is None: return
         r = ['<ul class="jqueryFileTree" style="display: none;">']
         # r.append('<li class="directory collapsed"><a href="#" rel="../">..</a></li>')
-        d = urllib.unquote(dir)
+        d = unquote(dir)
         for f in sorted(os.listdir(os.path.join(self.script_path, d))):
             ff = os.path.relpath(os.path.join(self.script_path, d,f), self.script_path)
             if os.path.isdir(os.path.join(self.script_path, d, ff)):
@@ -177,7 +182,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         code = code.replace('\r\n', '\n')
 
         locals = {}
-        exec code in locals
+        exec(code, locals)
 
         model = locals['model']
         cfg = locals.get('gui', None)
@@ -214,7 +219,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         code = code.replace('\r\n', '\n')
 
         locals = {}
-        exec code in locals
+        exec(code, locals)
 
         model = locals['model']
 
@@ -225,8 +230,8 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         port = 8080
 
         if not self.nengo_viz_started:
-            thread.start_new_thread(nengo_viz.server.Server.start, (),
-                                    dict(port=port, browser=False))
+            threading.Thread(target=nengo_viz.server.Server.start,
+                             kwargs=dict(port=port, browser=False)).start()
             self.nengo_viz_started = True
 
         return '%d' % port
@@ -252,7 +257,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         try:
             c = compile(code, code_fn, 'exec')
             locals = {}
-            exec c in locals
+            exec(c, locals)
         except (SyntaxError, Exception):
             try:
                 e_type, e_value, e_traceback = sys.exc_info()
@@ -268,10 +273,10 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
                             error_line = line
                             break
                     else:
-                        print 'Unknown Error'
+                        print('Unknown Error')
                         error_line = 0
 
-                print tb
+                print(tb)
                 traceback.print_exc()
 
                 os.remove(code_fn)
@@ -284,7 +289,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         # run gui code lines, skipping ones that cause name errors
         for i, line in enumerate(code_gui.splitlines()):
             try:
-                exec line in globals(), locals
+                exec(line, globals(), locals)
             except NameError:
                 # this is generally caused by having a gui[x].pos statement
                 #  for something that has been deleted

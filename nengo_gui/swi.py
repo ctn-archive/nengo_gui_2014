@@ -39,15 +39,34 @@ For further documentation, see http://terrystewart.ca/swi.html
 - 2005-04-03: Initial Release
 """
 
-import BaseHTTPServer
+try:
+    import BaseHTTPServer as http
+except ImportError:
+    import http.server as http
 import traceback
-import random,string,os,StringIO,mimetools,multifile
+import random,string,os
+try:
+    import StringIO
+except ImportError:
+    import io as StringIO
+try:
+    import mimetools
+except ImportError:
+    import email as mimetools
+try:
+    import multifile
+except ImportError:
+    import email as multifile
 import re
-import webbrowser,thread
+import webbrowser
 import mimetypes
+import threading
 
-import SocketServer
-class HTTPServer(SocketServer.ThreadingMixIn,BaseHTTPServer.HTTPServer):
+try:
+    import SocketServer
+except ImportError:
+    import socketserver as SocketServer
+class HTTPServer(SocketServer.ThreadingMixIn,http.HTTPServer):
   pass
 
 
@@ -78,7 +97,6 @@ def makeDBFromMultipart(data):
     db[name]=val
 
     i=j
-  print db
   return db
 
 
@@ -119,7 +137,7 @@ passwords={}
 def addUser(id,pwd):
   passwords[id]=pwd
 
-class SimpleWebInterface(BaseHTTPServer.BaseHTTPRequestHandler):
+class SimpleWebInterface(http.BaseHTTPRequestHandler):
   server_version='SimpleWebInterface/1.0'
   serveFiles=[]
   serveDirs=[]
@@ -139,7 +157,7 @@ class SimpleWebInterface(BaseHTTPServer.BaseHTTPRequestHandler):
       return id
     return None
   def getUserFromCookie(self):
-    if self.headers.has_key('cookie'):
+    if 'cookie' in self.headers:
       cookie=self.headers['cookie']
       for c in cookie.split(';'):
         if '=' in c:
@@ -168,7 +186,7 @@ class SimpleWebInterface(BaseHTTPServer.BaseHTTPRequestHandler):
     # for some reason, using POST here doesn't work under IE6, but does
     #  under Firefox and Safari.
     method='GET'
-    if self.headers.has_key('User-Agent'):
+    if 'User-Agent' in self.headers:
       agent=self.headers['User-Agent']
       if 'MSIE' not in agent: method='POST'
 
@@ -187,6 +205,7 @@ class SimpleWebInterface(BaseHTTPServer.BaseHTTPRequestHandler):
   def do_POST(self):
     del self.pendingHeaders[:]
     data=self.rfile.read(int(self.headers['Content-Length']))
+    data = data.decode('utf-8')
     if 'multipart/form-data' in self.headers['Content-Type']:
       db=makeDBFromMultipart(data)
     else:
@@ -239,14 +258,13 @@ class SimpleWebInterface(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type','text/html')
         self.end_headers()
-        print >>self.wfile,"<html><body><pre>"
+        self.wfile.write("<html><body><pre>".encode("utf-8"))
         text=StringIO.StringIO()
         traceback.print_exc(file=text)
         text=text.getvalue()
         text=text.replace('<','<')
         text=text.replace('>','>')
-        print >>self.wfile,"%s</pre></body></html>"%text
-        print text
+        self.wfile.write(("%s</pre></body></html>"%text).encode("utf-8"))
       else:
         if type(text)==type(()):
           ctype,text=text
@@ -255,14 +273,16 @@ class SimpleWebInterface(BaseHTTPServer.BaseHTTPRequestHandler):
         for k,v in self.pendingHeaders:
           self.send_header(k,v)
         self.end_headers()
-        print >>self.wfile,text
+        if not isinstance(text, bytes):
+            text = text.encode("utf-8")
+        self.wfile.write(text)
     elif self.path[1:] in self.serveFiles:
       self.sendFile(self.path[1:])
     elif self.path=='/robots.txt':
       self.send_response(200)
       self.send_header('Content-type','text/text')
       self.end_headers()
-      print >>self.wfile,"User-agent: *\nDisallow: /"
+      self.wfile.write("User-agent: *\nDisallow: /".encode("utf-8"))
     else:
       for d in self.serveDirs:
         if self.path[1:].startswith(d+'/'):
@@ -271,14 +291,14 @@ class SimpleWebInterface(BaseHTTPServer.BaseHTTPRequestHandler):
       self.send_response(200)
       self.send_header('Content-type','text/html')
       self.end_headers()
-      print >>self.wfile,"<html><body>Invalid request:<pre>args=%s</pre><pre>db=%s</pre></body></html>"%(args,db)
+      self.wfile.write(("<html><body>Invalid request:<pre>args=%s</pre><pre>db=%s</pre></body></html>"%(args,db)).encode("utf-8"))
   def sendFile(self,path):
     self.send_response(200)
     type,enc=mimetypes.guess_type(path)
     self.send_header('Content-type',type)
     self.send_header('Content-encoding',enc)
     self.end_headers()
-    print >>self.wfile,file(path,'rb').read()
+    self.wfile.write(file(path,'rb').read())
 
 
 
@@ -287,11 +307,12 @@ def start(klass, port=80, asynch=True, addr=''):
     if asynch:
         server=HTTPServer((addr,port),klass)
     else:
-        server=BaseHTTPServer.HTTPServer((addr,port),klass)
+        server=http.HTTPServer((addr,port),klass)
     server.serve_forever()
 
 def browser(port=80):
-    thread.start_new_thread(webbrowser.open,('http://localhost:%d'%port,))
+    threading.Thread(target=webbrowser.open,
+                     args=('http://localhost:%d'%port,)).start()
 
 
 if __name__=='__main__':

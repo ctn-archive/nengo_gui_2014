@@ -211,10 +211,11 @@ def apply_feedforward(parent):
     # take into account when positioning things
 
     def min_degree_partition(parent, items, degree_func):
-        if not items:
+        df = [degree_func(parent, item) for item in items]
+        if len(df) == 0:
             return [], []
 
-        min_degree = min([degree_func(parent, item) for item in items])
+        min_degree = min(df)
 
         chosen_vertices, remaining_vertices = partition(
             lambda item: degree_func(parent, item) == min_degree, items)
@@ -226,13 +227,16 @@ def apply_feedforward(parent):
 
     starting_vertices, _ = min_degree_partition(
         parent, sub_items, in_degree_func)
+    starting_vertices = list(starting_vertices)
 
     ending_vertices, _ = min_degree_partition(
         parent, sub_items, out_degree_func)
+    ending_vertices = list(ending_vertices)
 
     remaining_vertices = filter(
         lambda x: x not in starting_vertices and x not in ending_vertices,
         sub_items)
+    remaining_vertices = list(remaining_vertices)
 
     intersection = filter(lambda x: x in ending_vertices, starting_vertices)
 
@@ -245,10 +249,13 @@ def apply_feedforward(parent):
     if not starting_vertices:
         starting_vertices, remaining_vertices = min_degree_partition(
             parent, remaining_vertices, in_degree_func)
+        starting_vertices = list(starting_vertices)
 
     layers = []
-    if starting_vertices:
+    if len(starting_vertices) > 0:
         layers.append(starting_vertices)
+
+        remaining_vertices = list(remaining_vertices)
 
         while remaining_vertices:
 
@@ -260,12 +267,15 @@ def apply_feedforward(parent):
                     remaining_vertices)
 
                 next_layer.extend(new_vertices)
+            next_layer = list(next_layer)
 
-            if not next_layer:
+            if len(next_layer) == 0:
                 next_layer, remaining_vertices = min_degree_partition(
                     parent, remaining_vertices, in_degree_func)
+                next_layer = list(next_layer)
 
             layers.append(next_layer)
+            remaining_vertices = list(remaining_vertices)
 
     if ending_vertices:
         layers.append(ending_vertices)

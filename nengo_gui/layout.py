@@ -26,22 +26,22 @@ class Layout(object):
         if network==self.model:
             contain_pos = self.middle(network.networks + network.nodes
                 + network.ensembles)
-        
+
         for obj in network.networks:
             orig_size = self.config[obj].size
             size = self.process_network(obj)
             self.config[obj].size = size
-            
+
             if size != orig_size or self.config[obj].pos is None:
                 changed=True
 
             net = Item(obj, changed)
             nets[obj] = net
-            
+
         fixed = [nets[o].obj for o in nets if not nets[o].changed]
-        fixed += [o for o in network.nodes+network.ensembles 
+        fixed += [o for o in network.nodes+network.ensembles
             if self.config[o].pos != None]
-        
+
         floating = [nets[o].obj for o in nets if nets[o].changed]
         floating += [o for o in network.nodes+network.ensembles
             if self.config[o].pos == None]
@@ -50,8 +50,8 @@ class Layout(object):
             if network==self.model:
                 self.config[obj].scale = 1
             else:
-                self.config[obj].scale = contain_scale   
-            
+                self.config[obj].scale = contain_scale
+
             if self.config[obj].pos: #subnets may have position and float from size change
                 pos = self.config[obj].pos
             elif fixed: #if other items, start it at the mean
@@ -60,7 +60,7 @@ class Layout(object):
                 pos = 0.0,0.0
             else: #put it at the container position
                 pos = contain_pos
-                
+
             old_pos = np.array(pos, copy=True)
 
             size = self.config[obj].size
@@ -70,10 +70,10 @@ class Layout(object):
             pos = self.find_position(fixed, pos, size)
 
             self.config[obj].pos = pos
-            
+
             if obj in network.networks: #update all positions in subnet
                 self.update_positions(obj, np.array(pos)-old_pos)
-                
+
             fixed.append(obj)
 
             #compute size to return for this network
@@ -82,7 +82,7 @@ class Layout(object):
         if floating and network!=self.model:
             #if any subnetwork changed size or it has no size
             contain_size = self.network_size(network)
-            
+
         return contain_size
 
     def update_positions(self, net, pos):
@@ -91,7 +91,7 @@ class Layout(object):
             self.update_positions(obj, pos)
         for obj in net.nodes + net.ensembles:
             self.config[obj].pos += np.array(pos)
-            
+
     def network_size(self, net):
         nodes = net.ensembles + net.nodes + net.networks
         x0 = self.config[nodes[0]].pos[0] #first item in net x,y as a start
@@ -106,7 +106,7 @@ class Layout(object):
             scale = self.config[obj].scale
             xBorder = (self.config[obj].size[0] / 2)*scale
             yBorder = (self.config[obj].size[1] / 2)*scale
-            
+
             x = self.config[obj].pos[0]
             y = self.config[obj].pos[1]
 
@@ -114,7 +114,7 @@ class Layout(object):
             x1 = np.max([x + xBorder, x1])
             y0 = np.min([y - yBorder, y0])
             y1 = np.max([y + yBorder, y1])
-    
+
         self.config[net].pos = (x0 + x1) / 2, (y0 + y1) / 2  # x, y mid
 
         xsize = (x1 - x0)/self.config[net].scale + 2 * m
@@ -131,18 +131,18 @@ class Layout(object):
             for obj in objects: #check if current pos is valid
                 if self.is_overlap(obj, pos, size):
                     no_position = True
-                    pos += ((np.random.random(2) - .5) * self.config[obj].size 
+                    pos += ((np.random.random(2) - .5) * self.config[obj].size
                          + (np.array(pos)-np.array(self.config[obj].pos)))
                     break
 
             iters +=1
 
         if iters >= 499:
-            print '\n***Warning: Too many iterations, exiting\n'
+            print('\n***Warning: Too many iterations, exiting\n')
 
         return pos
 
-    def is_overlap(self, obj, pos, size): 
+    def is_overlap(self, obj, pos, size):
         #Determine if obj is inside the pos/size provided
         if (self.config[obj].size is not None and
            self.config[obj].pos is not None):
@@ -159,7 +159,7 @@ class Layout(object):
 
         return False
 
-    def is_in(self, obj, pos, size): 
+    def is_in(self, obj, pos, size):
         #Determine if obj is inside the pos/size provided
         if self.config[obj]:
             if (self.config[obj].size is not None and
