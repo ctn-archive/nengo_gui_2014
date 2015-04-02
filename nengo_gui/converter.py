@@ -3,7 +3,6 @@ import re
 import keyword
 import nengo_gui.namefinder as namefinder
 
-import pprint
 import nengo
 
 
@@ -143,5 +142,4 @@ class Converter(object):
         data = dict(nodes=self.objects, links=self.links,
                     global_scale=self.global_scale,
                     global_offset=self.global_offset)
-        pprint.pprint(data)
         return json.dumps(data)
