@@ -26,7 +26,7 @@ with model:
     # This will provide an error signal to conn
     error_conn = nengo.Connection(error, A_squared, modulatory=True)
     # Apply the PES learning rule to conn using error_con as the error signal
-    conn.learning_rule_type = nengo.PES(error_conn, learning_rate=2.0)
+    conn.learning_rule_type = nengo.PES(error_conn)
 
     # Compute the error signal - this would normally come from some external
     # system
