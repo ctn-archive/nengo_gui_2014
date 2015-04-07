@@ -26,7 +26,7 @@ with model:
     # This will provide an error signal to conn
     error_conn = nengo.Connection(error, A_squared, modulatory=True)
     # Apply the PES learning rule to conn using error_con as the error signal
-    conn.learning_rule = nengo.PES(error_conn, learning_rate=2.0)
+    conn.learning_rule_type = nengo.PES(error_conn, learning_rate=2.0)
 
     # Compute the error signal - this would normally come from some external
     # system
@@ -55,8 +55,8 @@ with model:
 
 import nengo_gui
 gui = nengo_gui.Config()
-gui[model].scale = 1.5712922403418472
-gui[model].offset = 77.74107509164281,64.92264812066998
+gui[model].scale = 1.169342373157824
+gui[model].offset = 119.41827203911265,59.133560955504436
 gui[A].pos = 175.000, 50.000
 gui[A].scale = 1.000
 gui[A_squared].pos = 279.965, 48.215
