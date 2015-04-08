@@ -67,7 +67,7 @@ function save_file() {
         xhr.open('POST', '/savefile', true);
         xhr.onload = function (event) {
 
-            if (this.responseText == "success\n") {
+            if (this.responseText == "success") {
                 $('#menu_save').addClass('disable');
             } else {
                 alert('Save error: ' + this.responseText);
