@@ -239,7 +239,7 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
         return '%d' % port
 
 
-    def swi_graph_json(self, code, feedforward=False):
+    def swi_graph_json(self, code, feedforward=False, graph_mode='normal'):
         if self.user is None: return
         if feedforward == "true":
             feedforward = True
@@ -316,19 +316,23 @@ class NengoGui(nengo_gui.swi.SimpleWebInterface):
             return json.dumps(dict(error_line=1,
                 text='The top-level nengo.Network must be named "model"'))
 
-        if feedforward:
-            cfg = nengo_gui.Config()
-
-            conv = nengo_gui.converter.Converter(model, code.splitlines(), locals, cfg)
-            feedforward_layout(model, cfg, locals, conv.links, conv.objects)
-            conv.global_scale = 1.0
-            conv.global_offset = 0.0, 0.0
-        else:
-            cfg = locals.get('gui', None)
-            if cfg is None:
+        if graph_mode == 'normal':
+            if feedforward:
                 cfg = nengo_gui.Config()
 
-            gui_layout = nengo_gui.layout.Layout(model, cfg)
-            conv = nengo_gui.converter.Converter(model, code.splitlines(), locals, cfg)
+                conv = nengo_gui.converter.Converter(model, code.splitlines(), locals, cfg)
+                feedforward_layout(model, cfg, locals, conv.links, conv.objects)
+                conv.global_scale = 1.0
+                conv.global_offset = 0.0, 0.0
+            else:
+                cfg = locals.get('gui', None)
+                if cfg is None:
+                    cfg = nengo_gui.Config()
 
-        return conv.to_json()
+                gui_layout = nengo_gui.layout.Layout(model, cfg)
+                conv = nengo_gui.converter.Converter(model, code.splitlines(), locals, cfg)
+
+            return conv.to_json()
+        else:
+            return json.dumps(dict(nodes=[], links=[],
+                                   global_scale=1.0, global_offset=(0,0)))

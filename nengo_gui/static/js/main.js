@@ -661,7 +661,11 @@ function reload_graph_data() {
     
     var data = new FormData();
     data.append('code', editor.getValue());
-
+    if ($('#menu_show_graph').hasClass('disable')) {
+        data.append('graph_mode', 'hidden');
+    } else {
+        data.append('graph_mode', 'normal');    
+    }
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/graph.json', true);
     xhr.onload = update_graph;

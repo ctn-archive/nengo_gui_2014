@@ -49,6 +49,17 @@ function feedfwd_layout() {
     xhr.send(data);
 }
 
+function toggle_show_graph() {
+    if ($('#menu_show_graph').hasClass('disable')) {
+        $('#menu_show_graph').removeClass('disable');
+        reload_graph_data();
+    } else {
+        $('#menu_show_graph').addClass('disable');
+        reload_graph_data();
+    }
+}
+
+
 function save_file() {
     if ($('#menu_save').hasClass('disable')) {
         return;
@@ -177,6 +188,7 @@ $(document).ready(function () {
 //    $('#zoom_mode').text(zoom_mode);    
     $('#menu_reload').click(reload_file);
     $('#menu_feedfwd').click(feedfwd_layout);
+    $('#menu_show_graph').click(toggle_show_graph);
 
     if (gui_server_check_interval>0) {
         window.setInterval(check_server_for_file_changes, 
